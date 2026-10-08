@@ -1,0 +1,21 @@
+services:
+  sscad:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${SSCAD_BASE_IMAGE:-ghcr.io/cesar-hpc/petro-tt/cesar-wormhole-simulator-ubuntu-22.04-release-amd64:latest-rc}
+    container_name: sscad
+    volumes:
+      - .:/workdir
+    working_dir: /workdir
+    environment:
+      TT_METAL_HOME: /tt-metal
+      TT_METAL_RUNTIME_ROOT: /tt-metal
+      ARCH_NAME: wormhole_b0
+      # O nome do .so muda entre imagens (libttsim_wh.so / libttsim_wh_x2.so).
+      TT_METAL_SIMULATOR: ${SSCAD_SIMULATOR:-/sim/libttsim_wh.so}
+      TT_METAL_SLOW_DISPATCH_MODE: "1"
+    stdin_open: true
+    tty: true
+    command: tail -f /dev/null
