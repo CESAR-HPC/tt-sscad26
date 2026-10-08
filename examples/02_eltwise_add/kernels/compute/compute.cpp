@@ -21,10 +21,12 @@ void kernel_main() {
     constexpr uint32_t cb_c = tt::CBIndex::c_16;
     constexpr uint32_t dst = 0; // índice do tile no registrador Dst
 
+    // ANCHOR: compute_init
     // Configura unpacker, FPU e packer para os formatos dos CBs usados e,
     // em seguida, a FPU para a operação de soma.
     compute_kernel_hw_startup(cb_a, cb_b, cb_c);
     add_init(cb_a, cb_b);
+    // ANCHOR_END: compute_init
 
     // ANCHOR: compute_loop
     for (uint32_t i = 0; i < num_tiles; i++) {

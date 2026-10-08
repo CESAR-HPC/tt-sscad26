@@ -114,6 +114,7 @@ int main() {
     std::vector<uint32_t> writer_args;
     TensorAccessorArgs(*c_buf).append_to(writer_args);
 
+    // ANCHOR: host_kernels
     KernelHandle reader = CreateKernel(
         program, KERNEL_DIR "dataflow/reader.cpp", all_cores,
         DataMovementConfig{.processor = DataMovementProcessor::RISCV_0,
@@ -126,6 +127,7 @@ int main() {
                            .compile_args = writer_args});
     KernelHandle compute =
         CreateKernel(program, KERNEL_DIR "compute/compute.cpp", all_cores, ComputeConfig{});
+    // ANCHOR_END: host_kernels
 
     // ANCHOR: host_runtime_args
     // Cada núcleo recebe a sua faixa de tiles. Percorremos os dois grupos na

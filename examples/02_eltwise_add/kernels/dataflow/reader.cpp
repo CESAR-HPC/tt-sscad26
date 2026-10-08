@@ -37,9 +37,11 @@ void kernel_main() {
         noc_async_read_page(i, b, get_write_ptr(cb_b));
         noc_async_read_barrier();
 
+        // ANCHOR: reader_dprint
 #ifdef SSCAD_DPRINT
         DPRINT("reader: tile {} de {} lido\n", i, num_tiles);
 #endif
+        // ANCHOR_END: reader_dprint
 
         // Publica os tiles: a partir daqui o compute os vê em cb_wait_front.
         cb_push_back(cb_a, 1);

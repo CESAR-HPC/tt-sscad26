@@ -105,12 +105,14 @@ int main() {
     std::vector<uint32_t> writer_args;
     TensorAccessorArgs(*c_buf).append_to(writer_args);
 
+    // ANCHOR: host_dprint
     // Defina SSCAD_DPRINT=1 para compilar o DPRINT de depuração do reader
     // (também é preciso TT_METAL_DPRINT_CORES=0,0).
     std::map<std::string, std::string> reader_defines;
     if (std::getenv("SSCAD_DPRINT") != nullptr) {
         reader_defines["SSCAD_DPRINT"] = "1";
     }
+    // ANCHOR_END: host_dprint
 
     KernelHandle reader = CreateKernel(
         program, KERNEL_DIR "dataflow/reader.cpp", core,
