@@ -5,6 +5,6 @@
 export TT_METAL_HOME="${TT_METAL_HOME:-/tt-metal}"
 export TT_METAL_RUNTIME_ROOT="${TT_METAL_RUNTIME_ROOT:-$TT_METAL_HOME}"
 export ARCH_NAME="${ARCH_NAME:-wormhole_b0}"
-export TT_METAL_SIMULATOR="${TT_METAL_SIMULATOR:-/sim/libttsim_wh.so}"
+export TT_METAL_SIMULATOR="${TT_METAL_SIMULATOR:-/sim/libttsim_wh_x2.so}"
 # O simulador só suporta o modo de despacho lento.
 export TT_METAL_SLOW_DISPATCH_MODE=1

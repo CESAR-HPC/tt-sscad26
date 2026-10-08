@@ -34,7 +34,7 @@ implemented in later tasks.
 |---|---|
 | TT-Metalium version | **v0.77.0** (same as petro-tt `Dockerfile.build`). |
 | Environment | Docker image with TT-Metalium + **ttsim** (Wormhole simulator). The user only needs Docker. |
-| Base image | `ghcr.io/cesar-hpc/petro-tt/cesar-wormhole-simulator-ubuntu-22.04-release-amd64` (the one used by `petro-tt/tt-blas/Dockerfile`). Pin a concrete tag if one exists for v0.77.0; otherwise use `latest-rc` and record the image digest in the README. |
+| Base image | `ghcr.io/cesar-hpc/petro-tt/cesar-tt-metalium-ubuntu-22.04-release-amd64:v.2.0.0` (tt-metal v0.77.0 + ttsim, `/sim/libttsim_wh_x2.so`). Record the image digest in the README. |
 | Host API | `distributed::MeshDevice`, `MeshBuffer`, `MeshWorkload`, `EnqueueMeshWorkload`, `EnqueueWrite/ReadMeshBuffer`; `Program` + `CreateCircularBuffer` + `CreateKernel` + `SetRuntimeArgs`. **Do not** use the experimental `experimental::ProgramSpec`/`MakeProgramFromSpec` (metal2) API. |
 | Kernel API | **`TensorAccessor` / `TensorAccessorArgs`** for DRAM access. **Do not** use `InterleavedAddrGenFast`/`InterleavedAddrGen` (their `noc_async_read_page`/`write_page` overloads are `[[deprecated]]` in v0.77). Use the new compute names (`add_init`, `mul_init`, …) rather than the deprecated `*_tiles_init`. |
 | Language | C++20. Identifiers in English; **code comments, READMEs and console messages in Portuguese (pt-BR)**, because the listings go into a Portuguese chapter. |

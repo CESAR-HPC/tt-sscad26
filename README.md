@@ -21,7 +21,7 @@ Com um tt-metal v0.77.0 compilado (`build_Release`) e o `.so` do ttsim:
 
 ```bash
 export TT_METAL_HOME=~/tt-metal
-export TT_METAL_SIMULATOR=~/sim/libttsim_wh_x2.so
+export TT_METAL_SIMULATOR=~/sim/libttsim_wh_x2.so   # caminho do .so do ttsim
 ./scripts/build.sh
 ./scripts/run_all.sh
 ```
@@ -72,17 +72,16 @@ obsoletas (`InterleavedAddrGen*`, `noc_async_*_tile`, `*_tiles_init`).
 
 ## Ambiente
 
-Verificado em 2026-10-08.
+Verificado em 2026-10-08, dentro do contêiner.
 
 | Item | Valor |
 |---|---|
+| Imagem | `ghcr.io/cesar-hpc/petro-tt/cesar-tt-metalium-ubuntu-22.04-release-amd64:v.2.0.0` |
+| Digest | `sha256:04e5bf26cf75e00c4017061bf52bf0326501120ab682163cc85c68eca63563d5` |
 | TT-Metalium | **v0.77.0** (`git -C $TT_METAL_HOME describe --tags`) |
-| Simulador | ttsim, `libttsim_wh_x2.so` (Wormhole) |
+| Simulador | ttsim, `/sim/libttsim_wh_x2.so` (Wormhole), definido pela imagem em `TT_METAL_SIMULATOR` |
 | Grade reportada por `compute_with_storage_grid_size()` | **8x9 = 72 núcleos** |
-| Compilador do host | GCC 13.3 (Ubuntu 24.04), CMake ≥ 3.22, Ninja |
-
-Imagem Docker: `ghcr.io/cesar-hpc/petro-tt/cesar-wormhole-simulator-ubuntu-22.04-release-amd64:latest-rc`
-(tt-metal v0.77.0 + ttsim).
+| Compilador do host | c++ (Ubuntu 12.3.0-1ubuntu1~22.04.3) 12.3.0, CMake, Ninja |
 
 ## Problemas comuns
 
