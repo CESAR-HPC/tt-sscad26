@@ -1,0 +1,50 @@
+# 03 — Soma elemento a elemento (vários núcleos)
+
+O exemplo 02 dividido entre vários núcleos Tensix. Os kernels são
+praticamente os mesmos; mudam apenas a divisão do trabalho no host e o
+índice do primeiro tile passado ao reader e ao writer.
+
+Referência: `tt-metal/tt_metal/programming_examples/vecadd_multi_core`.
+
+## Divisão do trabalho
+
+`split_work_to_cores(núcleos, num_tiles)` devolve dois grupos de núcleos:
+`group_1`, em que cada núcleo processa `tiles_per_core_1` tiles, e
+`group_2`, com um tile a menos por núcleo (vazio se a divisão for exata). O
+host percorre os dois grupos na mesma ordem, atribuindo a cada núcleo a faixa
+contígua `[start_tile, start_tile + tiles_per_core)`:
+
+| Kernel | Argumentos de execução |
+|---|---|
+| reader | endereço de A, endereço de B, `start_tile`, `num_tiles` |
+| compute | `num_tiles` (só enxerga os CBs) |
+| writer | endereço de C, `start_tile`, `num_tiles` |
+
+CBs e kernels são criados de uma vez em todos os núcleos, passando o
+`CoreRangeSet` em vez de um único `CoreCoord`.
+
+## Mapeamento
+
+| Item | Valor |
+|---|---|
+| Operação | `C = A + B`, bfloat16, padrão `256x256` (64 tiles) |
+| Núcleos | até a grade inteira (8x9 = 72 no simulador), ou `max_cores` |
+| CBs | `c_0`, `c_1`, `c_16`, 2 tiles cada |
+| Validação | igual ao exemplo 02 |
+
+## Como executar
+
+```bash
+./scripts/run.sh 03_eltwise_multicore              # 256x256, 1 tile por núcleo
+./scripts/run.sh 03_eltwise_multicore 512 512      # 256 tiles: 40 núcleos x 4 + 32 x 3
+./scripts/run.sh 03_eltwise_multicore 100 300 5    # limita a 5 núcleos
+```
+
+Saída esperada:
+
+```
+Exemplo 03: C = A + B com 512x512 bfloat16 (256 tiles) em 72 núcleos
+  40 núcleos com 4 tiles + 32 núcleos com 3 tiles
+Erro absoluto máximo: 4.395e-03 | erro relativo máximo: 2.197e-03 | PCC: 0.999999
+PASSOU
+```
