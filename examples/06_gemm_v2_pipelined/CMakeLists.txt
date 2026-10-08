@@ -1,0 +1,1 @@
+sscad_add_example(ex06_gemm_v2_pipelined main.cpp)
