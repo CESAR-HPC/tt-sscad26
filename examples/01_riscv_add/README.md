@@ -13,17 +13,18 @@ feito com `TensorAccessor`).
 
 | Item | Valor |
 |---|---|
-| Operação | `c = a + b`, `uint32` (padrão `14 + 7`) |
+| Operação | `c = a + b`, `uint32`, com `a = 14` e `b = 7` |
 | Núcleos | 1 (`{0,0}`) |
 | Kernels | 1 de movimentação de dados no RISC-V 0: `kernels/dataflow/riscv_add.cpp` |
 | Buffers | 3 na DRAM (`a`, `b`, `c`) + 3 na L1 (cópias de trabalho), página = 4 bytes |
-| Validação | `a + b` no host, com a mesma volta em 2³² do `uint32_t` |
+| Validação | `a + b` calculado no host |
 
 O kernel tem três partes:
 
 1. **leitura**: duas `noc_async_read_page` e uma única barreira;
-2. **soma**: a L1 está mapeada na memória do RISC-V, então basta um ponteiro
-   (`volatile tt_l1_ptr uint32_t*`). Depois do store, `ckernel::load_blocking`
+2. **soma**: a L1 está mapeada no espaço de endereços do RISC-V;
+   `CoreLocalMem<volatile uint32_t>` dá acesso tipado a um endereço da L1,
+   sem ponteiros. Depois do store, `ckernel::load_blocking`
    garante que o valor chegou à L1 antes de a NoC lê-lo: o RISC-V e a NoC são
    clientes independentes da L1 e a instrução `fence` é um nop nesses núcleos;
 3. **escrita**: `noc_async_write_page` e a barreira.
@@ -53,19 +54,17 @@ a aritmética sobre os dados para o kernel de computação — próximo exemplo.
 ## Como executar
 
 ```bash
-./scripts/run.sh 01_riscv_add                 # 14 + 7
-./scripts/run.sh 01_riscv_add 0xFFFFFFFF 1    # volta em 2^32 -> 0
-TT_METAL_DPRINT_CORES=0,0 ./scripts/run.sh 01_riscv_add 100 23
+./scripts/run.sh 01_riscv_add
+TT_METAL_DPRINT_CORES=0,0 ./scripts/run.sh 01_riscv_add
 ```
 
 Com `TT_METAL_DPRINT_CORES=0,0`, a mensagem do `DPRINT` do kernel aparece
 (funciona no simulador):
 
 ```
-Exemplo 01: 100 + 23 no RISC-V de movimentação de dados
-Dispositivo 0 aberto: grade de núcleos Tensix 8x9 (72 núcleos)
-0:0-0:BR: RISC-V: 100 + 23 = 123
-Resultado: 123 (esperado 123)
+Exemplo 01: 14 + 7 no RISC-V de movimentação de dados
+0:0-0:BR: RISC-V: 14 + 7 = 21
+Resultado: 21 (esperado 21)
 PASSOU
 ```
 

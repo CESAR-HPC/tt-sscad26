@@ -14,8 +14,8 @@ void kernel_main() {
 
     constexpr uint32_t cb_c = tt::CBIndex::c_16;
 
-    constexpr auto c_args = TensorAccessorArgs<0>();
-    const auto c = TensorAccessor(c_args, c_addr);
+    constexpr TensorAccessorArgs<0> c_args;
+    const TensorAccessor c(c_args, c_addr);
 
     // ANCHOR: writer_loop
     const uint32_t end_tile = start_tile + num_tiles;

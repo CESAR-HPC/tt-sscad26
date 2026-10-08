@@ -41,6 +41,20 @@ implemented in later tasks.
 | Target arch | `ARCH_NAME=wormhole_b0`; simulator via `TT_METAL_SIMULATOR`; `TT_METAL_SLOW_DISPATCH_MODE=1` is required by the simulator. |
 | License | Apache-2.0 (same as tt-metal). |
 
+### Code style for the examples
+
+- **No command line arguments.** Sizes and values are constants in `main.cpp`.
+- **Matrix dimensions are multiples of 32** (whole tiles); no padding code.
+- **Every TT-Metalium call is explicit in the example's `main.cpp`**
+  (opening the device, buffers, CBs, kernels, layout conversion), even if it
+  repeats boilerplate across examples. `common/` holds only code that does
+  not touch the TT-Metalium API (CPU references, comparison, timer).
+- **Explicit types.** Write the type returned by each call
+  (`std::shared_ptr<distributed::MeshBuffer>`, `KernelHandle`,
+  `CircularBufferConfig`, `constexpr TensorAccessorArgs<0>`, `const TensorAccessor`
+  via CTAD, ...). `auto` only where the type adds no information.
+- **No raw pointers.** In kernels, access L1 through `CoreLocalMem<T>`.
+
 ## 3. Target layout
 
 ```text
@@ -53,11 +67,8 @@ tt-sscad26/
 ├── CMakeLists.txt             # top-level; add_subdirectory(common) + one per example
 ├── cmake/
 │   └── tt_metal.cmake         # INTERFACE target `sscad_tt_metal` (includes, link dirs, libs, flags)
-├── common/                    # header-only host-side utilities (namespace sscad)
+├── common/                    # header-only host-side utilities (namespace sscad), no TT-Metalium calls
 │   ├── CMakeLists.txt
-│   ├── device.hpp             # open/close MeshDevice 1x1, print grid size and arch
-│   ├── layout.hpp             # row-major <-> tiled (32x32, faces) + padding to multiples of 32
-│   ├── data_format.hpp        # C++ type -> tt::DataFormat (bfloat16, float)
 │   ├── reference.hpp          # CPU references: eltwise add, gemv, gemm, linear+gelu
 │   ├── compare.hpp            # max abs/rel error, PCC; returns pass/fail with tolerance
 │   └── timer.hpp              # wall-clock timing for host + (optional) device markers
@@ -114,8 +125,9 @@ in the directory), so it stays green.
   repository is mounted as a volume.
 - Env vars set in compose **and** in `scripts/env.sh`:
   `TT_METAL_HOME=/tt-metal`, `TT_METAL_RUNTIME_ROOT=/tt-metal`,
-  `ARCH_NAME=wormhole_b0`, `TT_METAL_SIMULATOR=<path in image>`,
-  `TT_METAL_SLOW_DISPATCH_MODE=1`.
+  `ARCH_NAME=wormhole_b0`, `TT_METAL_SLOW_DISPATCH_MODE=1`.
+  `TT_METAL_SIMULATOR` comes from the image's `ENV` (the `.so` name depends on
+  the ttsim build); compose does not override it, `env.sh` only sets a fallback.
 - **Check inside the image** (do not assume): that the tt-metal checkout is
   v0.77.0 (`git -C $TT_METAL_HOME describe --tags`), that the simulator `.so`
   exists, and which grid `compute_with_storage_grid_size()` reports under the
@@ -182,12 +194,12 @@ back. Reference: `programming_examples/loopback` (already uses
 `TensorAccessor`; follow it, translating the comments to pt-BR and expanding them).
 
 - Operation: `out = in`, `in ∈ BF16^{num_tiles × 1024}`, default `num_tiles = 8`,
-  configurable via argv. The data is opaque bytes here: no tiled layout
+  fixed in `main.cpp`. The data is opaque bytes here: no tiled layout
   conversion is needed (say so in a comment).
 - **Single core** `{0,0}`, **one data movement kernel on `RISCV_0`**
   (`NOC::RISCV_0_default`), **no compute kernel and no CBs**.
 - Host:
-  1. Open a 1x1 `MeshDevice` (via `common/device.hpp`).
+  1. Open a 1x1 `MeshDevice` (`MeshDevice::create_unit_mesh(0)`).
   2. Buffers: two interleaved DRAM `MeshBuffer`s (input, output), page = 1 BF16
      tile (2048 B), and **one L1 `MeshBuffer` of a single tile** used as scratch
      space by the kernel. Comment on why the L1 buffer is needed: a Tensix core
@@ -221,8 +233,7 @@ compute kernel in example 02. Reference: `programming_examples/add_2_integers_in
 **but that kernel uses the deprecated `InterleavedAddrGen<true>`**; rewrite the
 DRAM access with `TensorAccessor`.
 
-- Operation: `c = a + b`, `a, b, c ∈ uint32`, defaults `a = 14`, `b = 7`,
-  configurable via argv.
+- Operation: `c = a + b`, `a, b, c ∈ uint32`, `a = 14`, `b = 7` (constants).
 - **Single core** `{0,0}`, **one data movement kernel on `RISCV_0`**, no compute
   kernel, no CBs.
 - Host:
@@ -235,13 +246,13 @@ DRAM access with `TensorAccessor`.
   3. Compile-time args: `TensorAccessorArgs` for `a`, `b`, `c`.
   4. Runtime args: DRAM addresses of `a`, `b`, `c` + L1 addresses of the three scratch buffers.
   5. Write `a` and `b`, enqueue, read `c` (blocking), compare with `a + b`
-     computed on the host (uint32 wrap-around), print `PASSOU`/`FALHOU`.
+     computed on the host, print `PASSOU`/`FALHOU`.
   6. If `TT_METAL_DPRINT_CORES` is not set, print a hint (pt-BR) telling the user
      to `export TT_METAL_DPRINT_CORES=0,0` to see the kernel's message.
 - Kernel `kernels/dataflow/riscv_add.cpp`:
   1. `riscv_read`: `noc_async_read_page(0, acc_a, l1_a)` and the same for `b`,
      then **one** `noc_async_read_barrier()` for both.
-  2. `riscv_add`: read the operands through `volatile tt_l1_ptr uint32_t*`,
+  2. `riscv_add`: read the operands through `CoreLocalMem<volatile uint32_t>` (no raw pointers),
      `DPRINT` the operation, store `a + b` in `l1_c`. Then force the store to land
      in L1 before the NoC reads it (`ckernel::load_blocking(...)`, as in the
      upstream example; verify the header in v0.77). Comment why: the RISC-V
@@ -271,12 +282,12 @@ DRAM access with `TensorAccessor`.
 host → DRAM buffers → reader → CB → compute → CB → writer → DRAM → host. It backs
 chapter sections 3.1–3.4.
 
-- Operation: `C = A + B`, `A, B, C ∈ BF16^{M×N}`, default `M = N = 64`
-  (4 tiles), configurable via argv.
+- Operation: `C = A + B`, `A, B, C ∈ BF16^{M×N}`, `M = N = 64` (4 tiles).
 - **Single core** `{0,0}` (multicore is example 03).
 - Host:
-  1. Open a 1x1 `MeshDevice` (via `common/device.hpp`).
-  2. Generate A and B with a fixed seed; convert to tiled layout (`common/layout.hpp`).
+  1. Open a 1x1 `MeshDevice` (`MeshDevice::create_unit_mesh(0)`).
+  2. Generate A and B with a fixed seed; convert to tiled layout with `convert_layout`
+     (`tt-metalium/tilize_utils.hpp`), called directly in `main.cpp`.
   3. Create 3 interleaved DRAM `MeshBuffer`s, page = 1 BF16 tile (2048 B).
   4. CBs: `c_0` (A), `c_1` (B), `c_16` (C), **2 tiles each (double buffering)**. Explain
      the choice of 2 in a comment.
@@ -304,8 +315,8 @@ chapter sections 3.1–3.4.
 
 Example 02 split across N cores with `split_work_to_cores` (2 core groups),
 following `programming_examples/vecadd_multi_core` and the work-group loop of
-`petro-tt/tt-blas` (`axpy.cpp`). CLI: `[M] [N] [max_cores]`, default
-`256x256`. Reader and writer take `start_tile` + `num_tiles`; the compute
+`petro-tt/tt-blas` (`axpy.cpp`). `M = N = 512` (256 tiles, an uneven split
+over the 8x9 grid), using the whole grid. Reader and writer take `start_tile` + `num_tiles`; the compute
 kernel is identical to example 02. Anchors: `host_split`,
 `host_runtime_args`, `reader_loop`, `compute_loop`, `writer_loop`.
 
@@ -322,7 +333,7 @@ Every stub README must already say (in pt-BR), so later tasks are unambiguous:
 | 08 | GEMM v4: v3 + multicast of A along rows and B along columns, with semaphores | `programming_examples/matmul/matmul_multicore_reuse_mcast` |
 | 09 | `Y = GELU(XW + b)`: GEMM v3 + bias add + GELU in SFPU, fused into the compute kernel | `api/compute/eltwise_unary/gelu.h` |
 
-All GEMM examples must share the same CLI (`--m --n --k --iters --check`) and print
+All GEMM examples use fixed sizes (multiples of 32, no command line) and print
 one CSV line `example,m,n,k,dtype,cores,time_ms,gflops,max_rel_err`, so the
 benchmark can collect them later.
 
@@ -330,13 +341,9 @@ benchmark can collect them later.
 
 1. From a clean clone: `docker compose up -d`, `docker compose exec sscad bash`,
    `./scripts/build.sh` and `./scripts/run_all.sh` complete with exit 0.
-2. On the simulator: `ex00_dram_loopback` prints `PASSOU` for the default size
-   and for `num_tiles = 64`; `ex01_riscv_add` prints `PASSOU` for the defaults
-   and for `a = 0xFFFFFFFF, b = 1` (wrap-around), and with
-   `TT_METAL_DPRINT_CORES=0,0` the kernel's `DPRINT` line appears (if DPRINT does
-   not work under ttsim, record it in "Problemas comuns"); `ex02_eltwise_add`
-   prints `PASSOU` for the default size and for `M=N=128`; `ex03_eltwise_multicore`
-   prints `PASSOU` for the default size and for an uneven split (e.g. `512x512`).
+2. On the simulator, `ex00_dram_loopback`, `ex01_riscv_add`, `ex02_eltwise_add`
+   and `ex03_eltwise_multicore` print `PASSOU`; with `TT_METAL_DPRINT_CORES=0,0`
+   the `DPRINT` line of example 01 appears.
 3. No use of `InterleavedAddrGenFast`/`InterleavedAddrGen` or `*_tiles_init`
    anywhere (`check_kernels.sh` green); host builds with
    `-Werror=deprecated-declarations`.

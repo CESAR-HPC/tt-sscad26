@@ -15,10 +15,6 @@ docker compose exec sscad bash
 ./scripts/run_all.sh
 ```
 
-> **Atenção:** a imagem publicada hoje ainda não é v0.77.0 — veja
-> [Ambiente](#ambiente). Enquanto isso, use uma imagem v0.77.0
-> (`SSCAD_BASE_IMAGE=... docker compose build`) ou a execução sem Docker.
-
 ### Sem Docker
 
 Com um tt-metal v0.77.0 compilado (`build_Release`) e o `.so` do ttsim:
@@ -34,7 +30,8 @@ export TT_METAL_SIMULATOR=~/sim/libttsim_wh_x2.so
 `ARCH_NAME=wormhole_b0`, `TT_METAL_SLOW_DISPATCH_MODE=1`) sem sobrescrever
 as que já estiverem definidas.
 
-Um exemplo isolado: `./scripts/run.sh 02_eltwise_add 128 128`.
+Um exemplo isolado: `./scripts/run.sh 02_eltwise_add`. Os exemplos não
+recebem argumentos: tamanhos e valores são constantes no próprio `main.cpp`.
 
 ## Exemplos
 
@@ -52,13 +49,16 @@ Um exemplo isolado: `./scripts/run.sh 02_eltwise_add 128 128`.
 | [09_linear_gelu](examples/09_linear_gelu) | `Y = GELU(XW + b)` | stub |
 
 Cada exemplo tem `main.cpp` (host), `kernels/` e um README com o objetivo, o
-mapeamento em núcleos e CBs e a saída esperada. Os stubs têm um arquivo
+mapeamento em núcleos e CBs e a saída esperada. Todas as chamadas ao
+TT-Metalium ficam explícitas no `main.cpp` de cada exemplo, mesmo que isso
+repita código entre eles, e as matrizes têm dimensões múltiplas de 32 (um
+número exato de tiles). Os stubs têm um arquivo
 `STUB` e são ignorados por `run_all.sh`.
 
 ## Estrutura
 
 ```
-common/     utilitários de host (abrir dispositivo, layout em tiles, referência em CPU, comparação)
+common/     utilitários de host sem TT-Metalium (referência em CPU, comparação, timer)
 examples/   um diretório por exemplo
 scripts/    env.sh, build.sh, run.sh, run_all.sh, check_kernels.sh
 cmake/      alvo sscad_tt_metal e a função sscad_add_example
@@ -81,21 +81,11 @@ Verificado em 2026-10-08.
 | Grade reportada por `compute_with_storage_grid_size()` | **8x9 = 72 núcleos** |
 | Compilador do host | GCC 13.3 (Ubuntu 24.04), CMake ≥ 3.22, Ninja |
 
-Imagem Docker: `ghcr.io/cesar-hpc/petro-tt/cesar-wormhole-simulator-ubuntu-22.04-release-amd64`.
-As tags publicadas são `v1.0.0`, `v1.0.1`, `v1.1.0` e `latest-rc`
-(`latest-rc` = `v1.1.0`, digest
-`sha256:f7a991ab19cc7b6c920501a049e7b163b2574e72f75fa38e1d2af4b764aeab39`).
-**Essa imagem traz o tt-metal `v0.68.0-dev20260302`, e não v0.77.0**, e o
-código não compila nela (veja abaixo). Nenhuma tag v0.77.0 foi publicada até
-agora. A imagem oficial `tenstorrent/tt-metal/tt-metalium-ubuntu-22.04-release-amd64:v0.77.0`
-traz apenas o wheel do `ttnn`, sem o pacote CMake do TT-Metalium; por isso
-`petro-tt/Dockerfile.build` compila o tt-metal a partir do código-fonte.
+Imagem Docker: `ghcr.io/cesar-hpc/petro-tt/cesar-wormhole-simulator-ubuntu-22.04-release-amd64:latest-rc`
+(tt-metal v0.77.0 + ttsim).
 
 ## Problemas comuns
 
-- **`'using CoreCoord = ...' is deprecated` ao compilar na imagem `latest-rc`.**
-  A imagem tem tt-metal v0.68; o código é escrito para v0.77.0. Use uma
-  imagem v0.77.0.
 - **`include could not find requested file: .../build_Release/Metalium.cmake`.**
   Existe uma cópia de `tt-metalium-config.cmake` na raiz de `build_Release`
   que não funciona; `cmake/tt_metal.cmake` aponta explicitamente para

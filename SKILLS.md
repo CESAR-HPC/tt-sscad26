@@ -39,4 +39,5 @@ The skeleton and the conventions are specified in `SPEC_SKELETON.md`, which take
 4. **Every example must validate** against a CPU reference and print `PASSOU`/`FALHOU`. `./scripts/run_all.sh` must stay green.
 5. Mark code the chapter quotes with `// ANCHOR: name` / `// ANCHOR_END: name`. Don't rename existing anchors.
 6. Keep each example self-contained (`main.cpp` + `kernels/{dataflow,compute}/`) and its README up to date.
-7. Small commits on feature branches; **don't push or open PRs without the owner's approval**.
+7. **Example code style:** no command line arguments (constants in `main.cpp`); matrix sizes are multiples of 32 (no padding); every TT-Metalium call is written out in the example itself, even if repeated (`common/` never wraps the API); explicit types instead of `auto` unless the type adds nothing; no raw pointers (use `CoreLocalMem<T>` for L1 in kernels).
+8. Small commits on feature branches; **don't push or open PRs without the owner's approval**.

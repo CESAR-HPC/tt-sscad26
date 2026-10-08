@@ -16,15 +16,11 @@ Referência: `programming_examples/matmul/matmul_multicore_reuse`
 - **compute** (`kernels/compute/compute.cpp`): Acumular sub-blocos de saída (out_subblock_h x out_subblock_w) no Dst reutilizando os blocos de A e B na L1.
 - **writer** (`kernels/dataflow/writer.cpp`): Escrever o bloco de saída do núcleo.
 
-## Interface comum (exemplos GEMM)
+## Saída para o benchmark
 
-Todos os exemplos GEMM (05–08) devem aceitar a mesma linha de comando:
-
-```
---m <M> --n <N> --k <K> --iters <repetições> --check
-```
-
-e imprimir uma linha CSV para o benchmark:
+Os exemplos GEMM (05–08) não recebem argumentos de linha de comando: os
+tamanhos são constantes no `main.cpp`, múltiplos de 32. Cada um deve imprimir
+uma linha CSV para o benchmark:
 
 ```
 example,m,n,k,dtype,cores,time_ms,gflops,max_rel_err

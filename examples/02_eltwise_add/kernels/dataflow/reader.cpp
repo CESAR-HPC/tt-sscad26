@@ -18,10 +18,10 @@ void kernel_main() {
     constexpr uint32_t cb_b = tt::CBIndex::c_1;
 
     // ANCHOR: reader_accessor
-    constexpr auto a_args = TensorAccessorArgs<0>();
-    const auto a = TensorAccessor(a_args, a_addr);
-    constexpr auto b_args = TensorAccessorArgs<a_args.next_compile_time_args_offset()>();
-    const auto b = TensorAccessor(b_args, b_addr);
+    constexpr TensorAccessorArgs<0> a_args;
+    const TensorAccessor a(a_args, a_addr);
+    constexpr TensorAccessorArgs<a_args.next_compile_time_args_offset()> b_args;
+    const TensorAccessor b(b_args, b_addr);
     // ANCHOR_END: reader_accessor
 
     // ANCHOR: reader_loop

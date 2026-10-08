@@ -11,10 +11,10 @@ Seções 3.1–3.4 do capítulo.
 
 ## Operação e decomposição em tiles
 
-`C = A + B`, com `A, B, C ∈ BF16^{M×N}` (padrão `M = N = 64`). As matrizes são
-completadas com zeros até múltiplos de 32 e convertidas para o layout em
-tiles (32x32, 4 faces de 16x16) no host (`common/layout.hpp`). Com `64x64`
-são 4 tiles; o tile `i` de C depende apenas do tile `i` de A e de B.
+`C = A + B`, com `A, B, C ∈ BF16^{64×64}`. As dimensões são múltiplos de 32,
+então as matrizes se dividem exatamente em 4 tiles. O host as converte para
+o layout em tiles (32x32, 4 faces de 16x16) com `convert_layout`; o tile `i`
+de C depende apenas do tile `i` de A e de B.
 
 ## Mapeamento
 
@@ -44,17 +44,14 @@ são 4 tiles; o tile `i` de C depende apenas do tile `i` de A e de B.
 ## Como executar
 
 ```bash
-./scripts/run.sh 02_eltwise_add            # 64x64
-./scripts/run.sh 02_eltwise_add 128 128
-./scripts/run.sh 02_eltwise_add 50 70      # dimensões não múltiplas de 32
-SSCAD_DPRINT=1 TT_METAL_DPRINT_CORES=0,0 ./scripts/run.sh 02_eltwise_add 32 64
+./scripts/run.sh 02_eltwise_add
+SSCAD_DPRINT=1 TT_METAL_DPRINT_CORES=0,0 ./scripts/run.sh 02_eltwise_add
 ```
 
 Saída esperada:
 
 ```
 Exemplo 02: C = A + B com A, B, C bfloat16 de 64x64 em 1 núcleo
-Dispositivo 0 aberto: grade de núcleos Tensix 8x9 (72 núcleos)
 Erro absoluto máximo: 3.906e-03 | erro relativo máximo: 1.969e-03 | PCC: 0.999999
 PASSOU
 ```

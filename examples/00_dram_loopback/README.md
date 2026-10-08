@@ -26,7 +26,7 @@ Referência: `tt-metal/tt_metal/programming_examples/loopback`.
 
 | Item | Valor |
 |---|---|
-| Operação | `saída = entrada`, `num_tiles` tiles bfloat16 (padrão 8) |
+| Operação | `saída = entrada`, 8 tiles bfloat16 |
 | Núcleos | 1 (`{0,0}`) |
 | Kernels | 1 de movimentação de dados no RISC-V 0: `kernels/dataflow/loopback.cpp` |
 | CBs | nenhum |
@@ -40,15 +40,13 @@ escrita separados.
 ## Como executar
 
 ```bash
-./scripts/run.sh 00_dram_loopback        # 8 tiles
-./scripts/run.sh 00_dram_loopback 64     # 64 tiles
+./scripts/run.sh 00_dram_loopback
 ```
 
 Saída esperada (além dos logs do runtime):
 
 ```
 Exemplo 00: cópia DRAM -> L1 -> DRAM de 8 tiles bfloat16
-Dispositivo 0 aberto: grade de núcleos Tensix 8x9 (72 núcleos)
 Elementos diferentes: 0 de 8192
 PASSOU
 ```

@@ -24,10 +24,10 @@ void kernel_main() {
     // Os TensorAccessorArgs vêm dos argumentos de compilação, na mesma ordem
     // em que o host os adicionou. O TensorAccessor traduz "página i" para o
     // endereço NoC (banco de DRAM + deslocamento) dessa página.
-    constexpr auto src_args = TensorAccessorArgs<0>();
-    const auto src = TensorAccessor(src_args, src_addr);
-    constexpr auto dst_args = TensorAccessorArgs<src_args.next_compile_time_args_offset()>();
-    const auto dst = TensorAccessor(dst_args, dst_addr);
+    constexpr TensorAccessorArgs<0> src_args;
+    const TensorAccessor src(src_args, src_addr);
+    constexpr TensorAccessorArgs<src_args.next_compile_time_args_offset()> dst_args;
+    const TensorAccessor dst(dst_args, dst_addr);
     // ANCHOR_END: loopback_accessor
 
     // ANCHOR: loopback_loop

@@ -20,6 +20,7 @@
 
 #include <cstdint>
 
+#include "api/core_local_mem.h"
 #include "api/dataflow/dataflow_api.h"
 #include "api/debug/dprint.h"
 #include "ckernel.h"
@@ -32,12 +33,12 @@ void kernel_main() {
     const uint32_t b_l1 = get_arg_val<uint32_t>(4);
     const uint32_t c_l1 = get_arg_val<uint32_t>(5);
 
-    constexpr auto a_args = TensorAccessorArgs<0>();
-    constexpr auto b_args = TensorAccessorArgs<a_args.next_compile_time_args_offset()>();
-    constexpr auto c_args = TensorAccessorArgs<b_args.next_compile_time_args_offset()>();
-    const auto a = TensorAccessor(a_args, a_dram);
-    const auto b = TensorAccessor(b_args, b_dram);
-    const auto c = TensorAccessor(c_args, c_dram);
+    constexpr TensorAccessorArgs<0> a_args;
+    constexpr TensorAccessorArgs<a_args.next_compile_time_args_offset()> b_args;
+    constexpr TensorAccessorArgs<b_args.next_compile_time_args_offset()> c_args;
+    const TensorAccessor a(a_args, a_dram);
+    const TensorAccessor b(b_args, b_dram);
+    const TensorAccessor c(c_args, c_dram);
 
     // ANCHOR: riscv_read
     // As duas leituras são disparadas juntas e esperadas por uma única
@@ -48,13 +49,18 @@ void kernel_main() {
     // ANCHOR_END: riscv_read
 
     // ANCHOR: riscv_add
-    // A L1 está mapeada no espaço de endereços do RISC-V: basta um ponteiro.
-    volatile tt_l1_ptr uint32_t *a_ptr = reinterpret_cast<volatile tt_l1_ptr uint32_t *>(a_l1);
-    volatile tt_l1_ptr uint32_t *b_ptr = reinterpret_cast<volatile tt_l1_ptr uint32_t *>(b_l1);
-    volatile tt_l1_ptr uint32_t *c_ptr = reinterpret_cast<volatile tt_l1_ptr uint32_t *>(c_l1);
+    // A L1 está mapeada no espaço de endereços do RISC-V. CoreLocalMem dá
+    // acesso tipado a um endereço da L1; `volatile` impede que o compilador
+    // elimine ou reordene os acessos, pois a NoC também escreve nessa memória.
+    const CoreLocalMem<volatile uint32_t> a_val(a_l1);
+    const CoreLocalMem<volatile uint32_t> b_val(b_l1);
+    const CoreLocalMem<volatile uint32_t> c_val(c_l1);
 
-    DPRINT("RISC-V: {} + {} = {}\n", *a_ptr, *b_ptr, *a_ptr + *b_ptr);
-    *c_ptr = *a_ptr + *b_ptr;
+    const uint32_t a_value = *a_val;
+    const uint32_t b_value = *b_val;
+    const uint32_t sum = a_value + b_value;
+    DPRINT("RISC-V: {} + {} = {}\n", a_value, b_value, sum);
+    *c_val = sum;
 
     // O store acima pode ser "aposentado" pelo RISC-V antes de chegar à L1, e
     // o RISC-V e a NoC são clientes independentes da L1, sem ordem entre si.
@@ -62,7 +68,7 @@ void kernel_main() {
     // (BabyRISCV/MemoryOrdering.md). load_blocking relê o endereço e trava o
     // pipeline até o store ter sido processado, garantindo que a NoC envie o
     // valor novo.
-    (void)ckernel::load_blocking(c_ptr);
+    ckernel::load_blocking(c_val.get_unsafe_ptr());
     // ANCHOR_END: riscv_add
 
     // ANCHOR: riscv_write

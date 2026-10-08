@@ -10,7 +10,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
-#include <string>
 #include <vector>
 
 #include <fmt/core.h>
@@ -19,14 +18,12 @@
 #include <tt-metalium/tensor_accessor_args.hpp>
 
 #include "compare.hpp"
-#include "device.hpp"
 
 using namespace tt::tt_metal;
 
-int main(int argc, char **argv) {
-    // Uso: ex01_riscv_add [a] [b]   (aceita decimal ou 0x...)
-    const uint32_t a = argc > 1 ? std::stoul(argv[1], nullptr, 0) : 14;
-    const uint32_t b = argc > 2 ? std::stoul(argv[2], nullptr, 0) : 7;
+int main() {
+    constexpr uint32_t a = 14;
+    constexpr uint32_t b = 7;
     fmt::print("Exemplo 01: {} + {} no RISC-V de movimentação de dados\n", a, b);
 
     if (std::getenv("TT_METAL_DPRINT_CORES") == nullptr) {
@@ -34,7 +31,7 @@ int main(int argc, char **argv) {
                    "mensagem impressa pelo kernel.\n");
     }
 
-    auto mesh_device = sscad::open_device();
+    std::shared_ptr<distributed::MeshDevice> mesh_device = distributed::MeshDevice::create_unit_mesh(0);
     distributed::MeshCommandQueue &cq = mesh_device->mesh_command_queue();
     constexpr CoreCoord core = {0, 0};
 
@@ -50,13 +47,20 @@ int main(int argc, char **argv) {
     distributed::ReplicatedBufferConfig size{.size = bytes};
 
     // Operandos e resultado na DRAM...
-    auto a_dram = distributed::MeshBuffer::create(size, dram_config, mesh_device.get());
-    auto b_dram = distributed::MeshBuffer::create(size, dram_config, mesh_device.get());
-    auto c_dram = distributed::MeshBuffer::create(size, dram_config, mesh_device.get());
+    std::shared_ptr<distributed::MeshBuffer> a_dram =
+        distributed::MeshBuffer::create(size, dram_config, mesh_device.get());
+    std::shared_ptr<distributed::MeshBuffer> b_dram =
+        distributed::MeshBuffer::create(size, dram_config, mesh_device.get());
+    std::shared_ptr<distributed::MeshBuffer> c_dram =
+        distributed::MeshBuffer::create(size, dram_config, mesh_device.get());
+
     // ...e suas cópias de trabalho na L1, onde o RISC-V consegue acessá-los.
-    auto a_l1 = distributed::MeshBuffer::create(size, l1_config, mesh_device.get());
-    auto b_l1 = distributed::MeshBuffer::create(size, l1_config, mesh_device.get());
-    auto c_l1 = distributed::MeshBuffer::create(size, l1_config, mesh_device.get());
+    std::shared_ptr<distributed::MeshBuffer> a_l1 =
+        distributed::MeshBuffer::create(size, l1_config, mesh_device.get());
+    std::shared_ptr<distributed::MeshBuffer> b_l1 =
+        distributed::MeshBuffer::create(size, l1_config, mesh_device.get());
+    std::shared_ptr<distributed::MeshBuffer> c_l1 =
+        distributed::MeshBuffer::create(size, l1_config, mesh_device.get());
     // ANCHOR_END: host_buffers
 
     Program program = CreateProgram();
@@ -85,22 +89,24 @@ int main(int argc, char **argv) {
     // ANCHOR_END: host_runtime_args
 
     // ANCHOR: host_enqueue
-    distributed::EnqueueWriteMeshBuffer(cq, a_dram, std::vector<uint32_t>{a}, /*blocking=*/false);
-    distributed::EnqueueWriteMeshBuffer(cq, b_dram, std::vector<uint32_t>{b}, /*blocking=*/false);
+    const std::vector<uint32_t> a_vec = {a};
+    const std::vector<uint32_t> b_vec = {b};
+    distributed::EnqueueWriteMeshBuffer(cq, a_dram, a_vec, /*blocking=*/false);
+    distributed::EnqueueWriteMeshBuffer(cq, b_dram, b_vec, /*blocking=*/false);
 
     distributed::MeshWorkload workload;
     workload.add_program(distributed::MeshCoordinateRange(mesh_device->shape()),
                          std::move(program));
     distributed::EnqueueMeshWorkload(cq, workload, /*blocking=*/false);
 
-    std::vector<uint32_t> c;
-    distributed::EnqueueReadMeshBuffer(cq, c, c_dram, /*blocking=*/true);
+    std::vector<uint32_t> c_vec;
+    distributed::EnqueueReadMeshBuffer(cq, c_vec, c_dram, /*blocking=*/true);
     // ANCHOR_END: host_enqueue
 
-    // Aritmética de uint32_t no host também dá a volta em 2^32, como no RISC-V.
-    const uint32_t expected = a + b;
-    const bool pass = c.size() == 1 && c[0] == expected;
-    fmt::print("Resultado: {} (esperado {})\n", c.empty() ? 0 : c[0], expected);
+    constexpr uint32_t expected = a + b;
+    const bool pass = c_vec.size() == 1 && c_vec[0] == expected;
+    fmt::print("Resultado: {} (esperado {})\n", c_vec.empty() ? 0 : c_vec[0], expected);
 
-    return sscad::report(sscad::close_device(mesh_device) && pass);
+    const bool closed = mesh_device->close();
+    return sscad::report(closed && pass);
 }

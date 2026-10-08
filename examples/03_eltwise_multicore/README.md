@@ -27,23 +27,24 @@ CBs e kernels são criados de uma vez em todos os núcleos, passando o
 
 | Item | Valor |
 |---|---|
-| Operação | `C = A + B`, bfloat16, padrão `256x256` (64 tiles) |
-| Núcleos | até a grade inteira (8x9 = 72 no simulador), ou `max_cores` |
+| Operação | `C = A + B`, bfloat16, `512x512` (256 tiles) |
+| Núcleos | a grade inteira (8x9 = 72 no simulador) |
 | CBs | `c_0`, `c_1`, `c_16`, 2 tiles cada |
 | Validação | igual ao exemplo 02 |
 
 ## Como executar
 
 ```bash
-./scripts/run.sh 03_eltwise_multicore              # 256x256, 1 tile por núcleo
-./scripts/run.sh 03_eltwise_multicore 512 512      # 256 tiles: 40 núcleos x 4 + 32 x 3
-./scripts/run.sh 03_eltwise_multicore 100 300 5    # limita a 5 núcleos
+./scripts/run.sh 03_eltwise_multicore
 ```
+
+Os 256 tiles não se dividem igualmente pelos 72 núcleos, então aparecem os
+dois grupos: 40 núcleos com 4 tiles e 32 com 3.
 
 Saída esperada:
 
 ```
-Exemplo 03: C = A + B com 512x512 bfloat16 (256 tiles) em 72 núcleos
+Exemplo 03: C = A + B com 512x512 bfloat16 (256 tiles) em 72 de 8x9 núcleos
   40 núcleos com 4 tiles + 32 núcleos com 3 tiles
 Erro absoluto máximo: 4.395e-03 | erro relativo máximo: 2.197e-03 | PCC: 0.999999
 PASSOU
