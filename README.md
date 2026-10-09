@@ -41,8 +41,8 @@ recebem argumentos: tamanhos e valores são constantes no próprio `main.cpp`.
 | [01_riscv_add](examples/01_riscv_add) | O RISC-V de movimentação de dados como CPU, e seus limites | implementado |
 | [02_eltwise_add](examples/02_eltwise_add) | `C = A + B`: reader → compute → writer, 1 núcleo | implementado |
 | [03_eltwise_multicore](examples/03_eltwise_multicore) | O exemplo 02 dividido entre os núcleos | implementado |
-| [04_gemv](examples/04_gemv) | `y = αAx + βy` | stub |
-| [05_gemm_v1_naive](examples/05_gemm_v1_naive) | GEMM ingênuo | stub |
+| [04_gemv](examples/04_gemv) | `y = αAx + βy` | implementado |
+| [05_gemm_v1_naive](examples/05_gemm_v1_naive) | GEMM ingênuo | implementado |
 | [06_gemm_v2_pipelined](examples/06_gemm_v2_pipelined) | GEMM com leituras sobrepostas | stub |
 | [07_gemm_v3_reuse](examples/07_gemm_v3_reuse) | GEMM com reuso em L1 | stub |
 | [08_gemm_v4_mcast](examples/08_gemm_v4_mcast) | GEMM com multicast | stub |
@@ -95,6 +95,12 @@ Verificado em 2026-10-08, dentro do contêiner.
 - **`-Wmissing-field-initializers`** dispara com os inicializadores
   designados parciais típicos do TT-Metalium (`DataMovementConfig{...}`), por
   isso o aviso está desligado.
+- **`MathFidelity` sem qualificação** também é um alias obsoleto; use
+  `tt::tt_metal::MathFidelity::HiFi4` no `ComputeConfig`.
+- **O unpacker não se reconfigura sozinho** quando o compute passa a ler CBs
+  de outro formato (no exemplo 04, bfloat16 no matmul e float na fase do
+  SFPU). Cada fase precisa começar com `reconfig_data_format*` para os CBs
+  que vai ler.
 - **Nada aparece no `DPRINT`.** É preciso `TT_METAL_DPRINT_CORES=0,0` (e, no
   exemplo 02, `SSCAD_DPRINT=1`). O `DPRINT` funciona no simulador.
 - **O simulador exige `TT_METAL_SLOW_DISPATCH_MODE=1`**, definido por `scripts/env.sh`.
