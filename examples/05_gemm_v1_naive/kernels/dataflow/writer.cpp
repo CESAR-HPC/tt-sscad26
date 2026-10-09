@@ -1,8 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Writer do exemplo 05 — GEMM v1 (ingênuo) (stub).
-//
-// O que este kernel deve fazer:
-//   Escrever cada tile de C na DRAM.
+// Writer do exemplo 05 (GEMM v1). Escreve cada tile de C na DRAM, com uma
+// barreira por tile, como no tt-blas.
 
-void kernel_main() {}
+#include <cstdint>
+
+#include "api/dataflow/dataflow_api.h"
+
+void kernel_main() {
+    const uint32_t c_addr = get_arg_val<uint32_t>(0);
+    const uint32_t start_tile = get_arg_val<uint32_t>(1);
+    const uint32_t num_tiles = get_arg_val<uint32_t>(2);
+
+    constexpr uint32_t cb_c = tt::CBIndex::c_16;
+
+    constexpr TensorAccessorArgs<0> c_args;
+    const TensorAccessor c(c_args, c_addr);
+
+    // ANCHOR: writer_loop
+    const uint32_t end_tile = start_tile + num_tiles;
+    for (uint32_t t = start_tile; t < end_tile; t++) {
+        cb_wait_front(cb_c, 1);
+        noc_async_write_page(t, c, get_read_ptr(cb_c));
+        noc_async_write_barrier();
+        cb_pop_front(cb_c, 1);
+    }
+    // ANCHOR_END: writer_loop
+}
