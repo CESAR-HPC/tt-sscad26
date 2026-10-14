@@ -1,0 +1,18 @@
+services:
+  sscad:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sscad
+    volumes:
+      - .:/workdir
+    working_dir: /workdir
+    # TT_METAL_SIMULATOR já vem definido pela imagem.
+    environment:
+      TT_METAL_HOME: /tt-metal
+      TT_METAL_RUNTIME_ROOT: /tt-metal
+      ARCH_NAME: wormhole_b0
+      TT_METAL_SLOW_DISPATCH_MODE: "1"
+    stdin_open: true
+    tty: true
+    command: tail -f /dev/null

@@ -51,6 +51,7 @@ cmake_install.cmake
 Makefile
 install_manifest.txt
 compile_commands.json
+.clangd
 
 # Temporary files
 *.tmp
@@ -67,3 +68,8 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# tt-sscad26
+bench/results/*.csv
+__pycache__/
+generated/

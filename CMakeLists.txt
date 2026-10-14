@@ -1,0 +1,25 @@
+cmake_minimum_required(VERSION 3.22)
+project(tt_sscad26 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+include(cmake/tt_metal.cmake)
+
+add_subdirectory(common)
+
+add_subdirectory(examples/00_dram_loopback)
+add_subdirectory(examples/01_riscv_add)
+add_subdirectory(examples/02_eltwise_add)
+add_subdirectory(examples/03_eltwise_multicore)
+add_subdirectory(examples/04_gemv)
+add_subdirectory(examples/05_gemm_v1_naive)
+add_subdirectory(examples/06_gemm_v2_pipelined)
+add_subdirectory(examples/07_gemm_v3_reuse)
+add_subdirectory(examples/08_gemm_v4_mcast)
+add_subdirectory(examples/09_linear_gelu)

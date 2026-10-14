@@ -1,0 +1,4 @@
+build/
+bench/results/*.csv
+**/__pycache__
+.git

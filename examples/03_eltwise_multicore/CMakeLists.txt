@@ -1,0 +1,1 @@
+sscad_add_example(ex03_eltwise_multicore main.cpp)
