@@ -7,7 +7,8 @@
 // outro buffer da DRAM passando pela SRAM (L1) do núcleo, e o host lê o
 // resultado de volta. Não há kernel de computação nem circular buffers.
 //
-//   host --(PCIe)--> DRAM (entrada) --(NoC)--> L1 --(NoC)--> DRAM (saída) --(PCIe)--> host
+//   host --(PCIe)--> DRAM (entrada) --(NoC)--> L1 --(NoC)--> DRAM (saída)
+//   --(PCIe)--> host
 
 #include <bit>
 #include <cstdint>
@@ -28,11 +29,13 @@ using namespace tt::tt_metal;
 
 int main() {
     constexpr uint32_t num_tiles = 8;
-    fmt::print("Exemplo 00: cópia DRAM -> L1 -> DRAM de {} tiles bfloat16\n", num_tiles);
+    fmt::print("Exemplo 00: cópia DRAM -> L1 -> DRAM de {} tiles bfloat16\n",
+               num_tiles);
 
     // Um MeshDevice 1x1, isto é, um único chip. A mesma API escala para malhas
     // com vários chips, mas no minicurso trabalhamos sempre com um só.
-    std::shared_ptr<distributed::MeshDevice> mesh_device = distributed::MeshDevice::create_unit_mesh(0);
+    std::shared_ptr<distributed::MeshDevice> mesh_device =
+        distributed::MeshDevice::create_unit_mesh(0);
 
     // Toda comunicação com o dispositivo (escritas, leituras e execução de
     // programas) passa pela fila de comandos, que executa em ordem.
@@ -52,12 +55,15 @@ int main() {
     // TensorAccessor faz essa conta a partir do índice da página.
     distributed::DeviceLocalBufferConfig dram_config{
         .page_size = tile_bytes, .buffer_type = BufferType::DRAM};
-    distributed::ReplicatedBufferConfig dram_size{.size = num_tiles * tile_bytes};
+    distributed::ReplicatedBufferConfig dram_size{.size =
+                                                      num_tiles * tile_bytes};
 
     std::shared_ptr<distributed::MeshBuffer> input =
-        distributed::MeshBuffer::create(dram_size, dram_config, mesh_device.get());
+        distributed::MeshBuffer::create(dram_size, dram_config,
+                                        mesh_device.get());
     std::shared_ptr<distributed::MeshBuffer> output =
-        distributed::MeshBuffer::create(dram_size, dram_config, mesh_device.get());
+        distributed::MeshBuffer::create(dram_size, dram_config,
+                                        mesh_device.get());
 
     // Um núcleo Tensix não lê a DRAM diretamente: todo dado passa pela L1
     // (a SRAM local do núcleo, ~1.5 MB no Wormhole) através da NoC. Por isso
@@ -108,7 +114,8 @@ int main() {
 
     // ANCHOR: host_enqueue
     // A fila de comandos executa em ordem: escrita -> programa -> leitura.
-    distributed::EnqueueWriteMeshBuffer(cq, input, input_vec, /*blocking=*/false);
+    distributed::EnqueueWriteMeshBuffer(cq, input, input_vec,
+                                        /*blocking=*/false);
 
     distributed::MeshWorkload workload;
     workload.add_program(distributed::MeshCoordinateRange(mesh_device->shape()),
@@ -116,14 +123,16 @@ int main() {
     distributed::EnqueueMeshWorkload(cq, workload, /*blocking=*/false);
 
     std::vector<bfloat16> output_vec;
-    distributed::EnqueueReadMeshBuffer(cq, output_vec, output, /*blocking=*/true);
+    distributed::EnqueueReadMeshBuffer(cq, output_vec, output,
+                                       /*blocking=*/true);
     // ANCHOR_END: host_enqueue
 
     // Uma cópia deve ser exata: comparamos bit a bit, sem tolerância.
     const bool same_size = output_vec.size() == input_vec.size();
     uint32_t mismatches = 0;
     for (uint32_t i = 0; same_size && i < num_elements; i++) {
-        if (std::bit_cast<uint16_t>(input_vec[i]) != std::bit_cast<uint16_t>(output_vec[i])) {
+        if (std::bit_cast<uint16_t>(input_vec[i]) !=
+            std::bit_cast<uint16_t>(output_vec[i])) {
             mismatches++;
         }
     }

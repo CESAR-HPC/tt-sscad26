@@ -37,10 +37,14 @@ int main() {
     // exatamente em tiles 32x32.
     constexpr uint32_t m = 64;
     constexpr uint32_t n = 64;
-    static_assert(m % tt::constants::TILE_HEIGHT == 0 && n % tt::constants::TILE_WIDTH == 0);
-    constexpr uint32_t num_tiles = (m / tt::constants::TILE_HEIGHT) * (n / tt::constants::TILE_WIDTH);
+    static_assert(m % tt::constants::TILE_HEIGHT == 0 &&
+                  n % tt::constants::TILE_WIDTH == 0);
+    constexpr uint32_t num_tiles =
+        (m / tt::constants::TILE_HEIGHT) * (n / tt::constants::TILE_WIDTH);
     constexpr uint32_t tile_bytes = sizeof(bfloat16) * tt::constants::TILE_HW;
-    fmt::print("Exemplo 02: C = A + B com A, B, C bfloat16 de {}x{} em 1 núcleo\n", m, n);
+    fmt::print(
+        "Exemplo 02: C = A + B com A, B, C bfloat16 de {}x{} em 1 núcleo\n", m,
+        n);
 
     // A e B aleatórios com semente fixa, para que a execução seja reprodutível.
     std::vector<bfloat16> a(m * n);
@@ -54,7 +58,8 @@ int main() {
         value = bfloat16(dist(rng));
     }
 
-    std::shared_ptr<distributed::MeshDevice> mesh_device = distributed::MeshDevice::create_unit_mesh(0);
+    std::shared_ptr<distributed::MeshDevice> mesh_device =
+        distributed::MeshDevice::create_unit_mesh(0);
     distributed::MeshCommandQueue &cq = mesh_device->mesh_command_queue();
     constexpr CoreCoord core = {0, 0};
 
@@ -83,17 +88,20 @@ int main() {
     constexpr uint32_t tiles_per_cb = 2;
 
     CircularBufferConfig cb_a_config =
-        CircularBufferConfig(tiles_per_cb * tile_bytes, {{tt::CBIndex::c_0, tt::DataFormat::Float16_b}})
+        CircularBufferConfig(tiles_per_cb * tile_bytes,
+                             {{tt::CBIndex::c_0, tt::DataFormat::Float16_b}})
             .set_page_size(tt::CBIndex::c_0, tile_bytes);
     CreateCircularBuffer(program, core, cb_a_config);
 
     CircularBufferConfig cb_b_config =
-        CircularBufferConfig(tiles_per_cb * tile_bytes, {{tt::CBIndex::c_1, tt::DataFormat::Float16_b}})
+        CircularBufferConfig(tiles_per_cb * tile_bytes,
+                             {{tt::CBIndex::c_1, tt::DataFormat::Float16_b}})
             .set_page_size(tt::CBIndex::c_1, tile_bytes);
     CreateCircularBuffer(program, core, cb_b_config);
 
     CircularBufferConfig cb_c_config =
-        CircularBufferConfig(tiles_per_cb * tile_bytes, {{tt::CBIndex::c_16, tt::DataFormat::Float16_b}})
+        CircularBufferConfig(tiles_per_cb * tile_bytes,
+                             {{tt::CBIndex::c_16, tt::DataFormat::Float16_b}})
             .set_page_size(tt::CBIndex::c_16, tile_bytes);
     CreateCircularBuffer(program, core, cb_c_config);
     // ANCHOR_END: host_cbs
@@ -125,8 +133,8 @@ int main() {
         DataMovementConfig{.processor = DataMovementProcessor::RISCV_1,
                            .noc = NOC::RISCV_1_default,
                            .compile_args = writer_args});
-    KernelHandle compute =
-        CreateKernel(program, KERNEL_DIR "compute/compute.cpp", core, ComputeConfig{});
+    KernelHandle compute = CreateKernel(
+        program, KERNEL_DIR "compute/compute.cpp", core, ComputeConfig{});
     // ANCHOR_END: host_kernels
 
     // ANCHOR: host_runtime_args
@@ -142,10 +150,12 @@ int main() {
     // As matrizes vão para o dispositivo no layout em tiles: sequência de
     // tiles 32x32, cada um dividido em 4 faces 16x16, que é o formato
     // esperado pelas unidades de cálculo do Tensix.
-    const std::vector<bfloat16> a_tiled = convert_layout<bfloat16>(
-        a, {m, n}, TensorLayoutType::LIN_ROW_MAJOR, TensorLayoutType::TILED_NFACES);
-    const std::vector<bfloat16> b_tiled = convert_layout<bfloat16>(
-        b, {m, n}, TensorLayoutType::LIN_ROW_MAJOR, TensorLayoutType::TILED_NFACES);
+    const std::vector<bfloat16> a_tiled =
+        convert_layout<bfloat16>(a, {m, n}, TensorLayoutType::LIN_ROW_MAJOR,
+                                 TensorLayoutType::TILED_NFACES);
+    const std::vector<bfloat16> b_tiled =
+        convert_layout<bfloat16>(b, {m, n}, TensorLayoutType::LIN_ROW_MAJOR,
+                                 TensorLayoutType::TILED_NFACES);
     distributed::EnqueueWriteMeshBuffer(cq, a_buf, a_tiled, /*blocking=*/false);
     distributed::EnqueueWriteMeshBuffer(cq, b_buf, b_tiled, /*blocking=*/false);
 
@@ -159,8 +169,10 @@ int main() {
     // ANCHOR_END: host_enqueue
 
     const std::vector<bfloat16> c = convert_layout<bfloat16>(
-        c_tiled, {m, n}, TensorLayoutType::TILED_NFACES, TensorLayoutType::LIN_ROW_MAJOR);
-    const sscad::CompareResult result = sscad::compare(c, sscad::reference::eltwise_add(a, b));
+        c_tiled, {m, n}, TensorLayoutType::TILED_NFACES,
+        TensorLayoutType::LIN_ROW_MAJOR);
+    const sscad::CompareResult result =
+        sscad::compare(c, sscad::reference::eltwise_add(a, b));
     sscad::print_compare(result);
 
     const bool closed = mesh_device->close();
