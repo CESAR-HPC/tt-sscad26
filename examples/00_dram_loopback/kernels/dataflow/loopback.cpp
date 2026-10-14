@@ -26,7 +26,8 @@ void kernel_main() {
     // endereço NoC (banco de DRAM + deslocamento) dessa página.
     constexpr TensorAccessorArgs<0> src_args;
     const TensorAccessor src(src_args, src_addr);
-    constexpr TensorAccessorArgs<src_args.next_compile_time_args_offset()> dst_args;
+    constexpr TensorAccessorArgs<src_args.next_compile_time_args_offset()>
+        dst_args;
     const TensorAccessor dst(dst_args, dst_addr);
     // ANCHOR_END: loopback_accessor
 

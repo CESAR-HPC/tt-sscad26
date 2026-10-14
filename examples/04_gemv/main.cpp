@@ -45,7 +45,8 @@ using namespace tt::tt_metal;
 // Vetor x de tamanho rows -> matriz rows x cols com x[i] na coluna 0 de cada
 // coluna de tiles: padded[i][32 * j] = x[i]. O resto é zero.
 template <typename T>
-std::vector<T> pad_vector_to_matrix(const std::vector<T> &vec, uint32_t rows, uint32_t cols) {
+std::vector<T> pad_vector_to_matrix(const std::vector<T> &vec, uint32_t rows,
+                                    uint32_t cols) {
     std::vector<T> padded(rows * cols, static_cast<T>(0));
     const uint32_t tile_cols = cols / tt::constants::TILE_WIDTH;
     for (uint32_t i = 0; i < rows; i++) {
@@ -59,7 +60,8 @@ std::vector<T> pad_vector_to_matrix(const std::vector<T> &vec, uint32_t rows, ui
 // Vetor y de tamanho rows -> matriz rows x cols com y[i] apenas na coluna 0:
 // padded[i][0] = y[i]. O resto é zero.
 template <typename T>
-std::vector<T> pad_vector_with_zeros(const std::vector<T> &vec, uint32_t rows, uint32_t cols) {
+std::vector<T> pad_vector_with_zeros(const std::vector<T> &vec, uint32_t rows,
+                                     uint32_t cols) {
     std::vector<T> padded(rows * cols, static_cast<T>(0));
     for (uint32_t i = 0; i < rows; i++) {
         padded[i * cols] = vec[i];
@@ -73,14 +75,18 @@ int main() {
     // confundam.
     constexpr uint32_t m = 512;
     constexpr uint32_t n = 256;
-    static_assert(m % tt::constants::TILE_HEIGHT == 0 && n % tt::constants::TILE_WIDTH == 0);
-    constexpr uint32_t Mt = m / tt::constants::TILE_HEIGHT; // linhas de tiles de A (e de y)
-    constexpr uint32_t Nt = n / tt::constants::TILE_WIDTH;  // colunas de tiles de A
+    static_assert(m % tt::constants::TILE_HEIGHT == 0 &&
+                  n % tt::constants::TILE_WIDTH == 0);
+    constexpr uint32_t Mt =
+        m / tt::constants::TILE_HEIGHT; // linhas de tiles de A (e de y)
+    constexpr uint32_t Nt =
+        n / tt::constants::TILE_WIDTH; // colunas de tiles de A
     constexpr float alpha = 2.0f;
     constexpr float beta = 0.5f;
 
     // Tiles de entrada em bfloat16, tiles de y/alpha/beta/saída em float.
-    constexpr uint32_t in_tile_bytes = sizeof(bfloat16) * tt::constants::TILE_HW;
+    constexpr uint32_t in_tile_bytes =
+        sizeof(bfloat16) * tt::constants::TILE_HW;
     constexpr uint32_t acc_tile_bytes = sizeof(float) * tt::constants::TILE_HW;
 
     std::vector<bfloat16> a(m * n);
@@ -110,12 +116,15 @@ int main() {
     const std::vector<float> alpha_tile(tt::constants::TILE_HW, alpha);
     const std::vector<float> beta_tile(tt::constants::TILE_HW, beta);
 
-    const std::vector<bfloat16> a_tiled = convert_layout<bfloat16>(
-        a, {m, n}, TensorLayoutType::LIN_ROW_MAJOR, TensorLayoutType::TILED_NFACES);
+    const std::vector<bfloat16> a_tiled =
+        convert_layout<bfloat16>(a, {m, n}, TensorLayoutType::LIN_ROW_MAJOR,
+                                 TensorLayoutType::TILED_NFACES);
     const std::vector<bfloat16> x_tiled = convert_layout<bfloat16>(
-        x_padded, {n, m}, TensorLayoutType::LIN_ROW_MAJOR, TensorLayoutType::TILED_NFACES);
-    const std::vector<float> y_tiled = convert_layout<float>(
-        y_padded, {m, m}, TensorLayoutType::LIN_ROW_MAJOR, TensorLayoutType::TILED_NFACES);
+        x_padded, {n, m}, TensorLayoutType::LIN_ROW_MAJOR,
+        TensorLayoutType::TILED_NFACES);
+    const std::vector<float> y_tiled =
+        convert_layout<float>(y_padded, {m, m}, TensorLayoutType::LIN_ROW_MAJOR,
+                              TensorLayoutType::TILED_NFACES);
     const std::vector<float> alpha_tiled = convert_layout<float>(
         alpha_tile, {tt::constants::TILE_HEIGHT, tt::constants::TILE_WIDTH},
         TensorLayoutType::LIN_ROW_MAJOR, TensorLayoutType::TILED_NFACES);
@@ -124,7 +133,8 @@ int main() {
         TensorLayoutType::LIN_ROW_MAJOR, TensorLayoutType::TILED_NFACES);
     // ANCHOR_END: host_layout
 
-    std::shared_ptr<distributed::MeshDevice> mesh_device = distributed::MeshDevice::create_unit_mesh(0);
+    std::shared_ptr<distributed::MeshDevice> mesh_device =
+        distributed::MeshDevice::create_unit_mesh(0);
     distributed::MeshCommandQueue &cq = mesh_device->mesh_command_queue();
 
     // ANCHOR: host_split
@@ -138,11 +148,12 @@ int main() {
     tt::tt_metal::CoreRangeSet group_2;
     uint32_t rows_per_core_1 = 0;
     uint32_t rows_per_core_2 = 0;
-    std::tie(num_cores, all_cores, group_1, group_2, rows_per_core_1, rows_per_core_2) =
-        split_work_to_cores(grid, Mt);
+    std::tie(num_cores, all_cores, group_1, group_2, rows_per_core_1,
+             rows_per_core_2) = split_work_to_cores(grid, Mt);
     // ANCHOR_END: host_split
 
-    fmt::print("Exemplo 04: y = {} * A x + {} * y com A {}x{} bfloat16 e y float em {} de {}x{} núcleos\n",
+    fmt::print("Exemplo 04: y = {} * A x + {} * y com A {}x{} bfloat16 e y "
+               "float em {} de {}x{} núcleos\n",
                alpha, beta, m, n, num_cores, grid.x, grid.y);
 
     // ANCHOR: host_buffers
@@ -153,21 +164,28 @@ int main() {
 
     distributed::ReplicatedBufferConfig a_size{.size = Mt * Nt * in_tile_bytes};
     distributed::ReplicatedBufferConfig x_size{.size = Nt * Mt * in_tile_bytes};
-    distributed::ReplicatedBufferConfig y_size{.size = Mt * Mt * acc_tile_bytes};
+    distributed::ReplicatedBufferConfig y_size{.size =
+                                                   Mt * Mt * acc_tile_bytes};
     distributed::ReplicatedBufferConfig scalar_size{.size = acc_tile_bytes};
 
     std::shared_ptr<distributed::MeshBuffer> a_buf =
-        distributed::MeshBuffer::create(a_size, in_dram_config, mesh_device.get());
+        distributed::MeshBuffer::create(a_size, in_dram_config,
+                                        mesh_device.get());
     std::shared_ptr<distributed::MeshBuffer> x_buf =
-        distributed::MeshBuffer::create(x_size, in_dram_config, mesh_device.get());
+        distributed::MeshBuffer::create(x_size, in_dram_config,
+                                        mesh_device.get());
     std::shared_ptr<distributed::MeshBuffer> y_buf =
-        distributed::MeshBuffer::create(y_size, acc_dram_config, mesh_device.get());
+        distributed::MeshBuffer::create(y_size, acc_dram_config,
+                                        mesh_device.get());
     std::shared_ptr<distributed::MeshBuffer> alpha_buf =
-        distributed::MeshBuffer::create(scalar_size, acc_dram_config, mesh_device.get());
+        distributed::MeshBuffer::create(scalar_size, acc_dram_config,
+                                        mesh_device.get());
     std::shared_ptr<distributed::MeshBuffer> beta_buf =
-        distributed::MeshBuffer::create(scalar_size, acc_dram_config, mesh_device.get());
+        distributed::MeshBuffer::create(scalar_size, acc_dram_config,
+                                        mesh_device.get());
     std::shared_ptr<distributed::MeshBuffer> out_buf =
-        distributed::MeshBuffer::create(y_size, acc_dram_config, mesh_device.get());
+        distributed::MeshBuffer::create(y_size, acc_dram_config,
+                                        mesh_device.get());
     // ANCHOR_END: host_buffers
 
     Program program = CreateProgram();
@@ -176,42 +194,49 @@ int main() {
     // c_0 (A) e c_1 (x): bfloat16, 2 tiles (double buffering).
     // c_2 (y): float, 2 tiles.
     // c_3 (alpha) e c_4 (beta): float, 1 tile, lidos uma vez e nunca liberados.
-    // c_5: resultado intermediário A x (float), entre a fase de matmul e a de SFPU.
-    // c_16 (saída): float, 2 tiles.
+    // c_5: resultado intermediário A x (float), entre a fase de matmul e a de
+    // SFPU. c_16 (saída): float, 2 tiles.
     constexpr uint32_t tiles_per_cb = 2;
 
     CircularBufferConfig cb_a_config =
-        CircularBufferConfig(tiles_per_cb * in_tile_bytes, {{tt::CBIndex::c_0, tt::DataFormat::Float16_b}})
+        CircularBufferConfig(tiles_per_cb * in_tile_bytes,
+                             {{tt::CBIndex::c_0, tt::DataFormat::Float16_b}})
             .set_page_size(tt::CBIndex::c_0, in_tile_bytes);
     CreateCircularBuffer(program, all_cores, cb_a_config);
 
     CircularBufferConfig cb_x_config =
-        CircularBufferConfig(tiles_per_cb * in_tile_bytes, {{tt::CBIndex::c_1, tt::DataFormat::Float16_b}})
+        CircularBufferConfig(tiles_per_cb * in_tile_bytes,
+                             {{tt::CBIndex::c_1, tt::DataFormat::Float16_b}})
             .set_page_size(tt::CBIndex::c_1, in_tile_bytes);
     CreateCircularBuffer(program, all_cores, cb_x_config);
 
     CircularBufferConfig cb_y_config =
-        CircularBufferConfig(tiles_per_cb * acc_tile_bytes, {{tt::CBIndex::c_2, tt::DataFormat::Float32}})
+        CircularBufferConfig(tiles_per_cb * acc_tile_bytes,
+                             {{tt::CBIndex::c_2, tt::DataFormat::Float32}})
             .set_page_size(tt::CBIndex::c_2, acc_tile_bytes);
     CreateCircularBuffer(program, all_cores, cb_y_config);
 
     CircularBufferConfig cb_alpha_config =
-        CircularBufferConfig(acc_tile_bytes, {{tt::CBIndex::c_3, tt::DataFormat::Float32}})
+        CircularBufferConfig(acc_tile_bytes,
+                             {{tt::CBIndex::c_3, tt::DataFormat::Float32}})
             .set_page_size(tt::CBIndex::c_3, acc_tile_bytes);
     CreateCircularBuffer(program, all_cores, cb_alpha_config);
 
     CircularBufferConfig cb_beta_config =
-        CircularBufferConfig(acc_tile_bytes, {{tt::CBIndex::c_4, tt::DataFormat::Float32}})
+        CircularBufferConfig(acc_tile_bytes,
+                             {{tt::CBIndex::c_4, tt::DataFormat::Float32}})
             .set_page_size(tt::CBIndex::c_4, acc_tile_bytes);
     CreateCircularBuffer(program, all_cores, cb_beta_config);
 
     CircularBufferConfig cb_ax_config =
-        CircularBufferConfig(acc_tile_bytes, {{tt::CBIndex::c_5, tt::DataFormat::Float32}})
+        CircularBufferConfig(acc_tile_bytes,
+                             {{tt::CBIndex::c_5, tt::DataFormat::Float32}})
             .set_page_size(tt::CBIndex::c_5, acc_tile_bytes);
     CreateCircularBuffer(program, all_cores, cb_ax_config);
 
     CircularBufferConfig cb_out_config =
-        CircularBufferConfig(tiles_per_cb * acc_tile_bytes, {{tt::CBIndex::c_16, tt::DataFormat::Float32}})
+        CircularBufferConfig(tiles_per_cb * acc_tile_bytes,
+                             {{tt::CBIndex::c_16, tt::DataFormat::Float32}})
             .set_page_size(tt::CBIndex::c_16, acc_tile_bytes);
     CreateCircularBuffer(program, all_cores, cb_out_config);
     // ANCHOR_END: host_cbs
@@ -240,15 +265,17 @@ int main() {
     // tiles não perde precisão. HiFi4 usa todos os bits da mantissa no FPU.
     KernelHandle compute = CreateKernel(
         program, KERNEL_DIR "compute/compute.cpp", all_cores,
-        ComputeConfig{.math_fidelity = tt::tt_metal::MathFidelity::HiFi4, .fp32_dest_acc_en = true});
+        ComputeConfig{.math_fidelity = tt::tt_metal::MathFidelity::HiFi4,
+                      .fp32_dest_acc_en = true});
     // ANCHOR_END: host_kernels
 
     // ANCHOR: host_runtime_args
-    const std::vector<std::pair<tt::tt_metal::CoreRangeSet, uint32_t>> work_groups = {
-        {group_1, rows_per_core_1}, {group_2, rows_per_core_2}};
+    const std::vector<std::pair<tt::tt_metal::CoreRangeSet, uint32_t>>
+        work_groups = {{group_1, rows_per_core_1}, {group_2, rows_per_core_2}};
 
     uint32_t start_row = 0;
-    for (const std::pair<tt::tt_metal::CoreRangeSet, uint32_t> &work_group : work_groups) {
+    for (const std::pair<tt::tt_metal::CoreRangeSet, uint32_t> &work_group :
+         work_groups) {
         const uint32_t rows_per_core = work_group.second;
         for (const tt::tt_metal::CoreRange &range : work_group.first.ranges()) {
             for (const CoreCoord &core : range) {
@@ -257,12 +284,12 @@ int main() {
                                 static_cast<uint32_t>(x_buf->address()),
                                 static_cast<uint32_t>(y_buf->address()),
                                 static_cast<uint32_t>(alpha_buf->address()),
-                                static_cast<uint32_t>(beta_buf->address()), Mt, Nt, start_row,
-                                rows_per_core});
+                                static_cast<uint32_t>(beta_buf->address()), Mt,
+                                Nt, start_row, rows_per_core});
                 SetRuntimeArgs(program, compute, core, {Nt, rows_per_core});
                 SetRuntimeArgs(program, writer, core,
-                               {static_cast<uint32_t>(out_buf->address()), Mt, start_row,
-                                rows_per_core});
+                               {static_cast<uint32_t>(out_buf->address()), Mt,
+                                start_row, rows_per_core});
                 start_row += rows_per_core;
             }
         }
@@ -273,8 +300,10 @@ int main() {
     distributed::EnqueueWriteMeshBuffer(cq, a_buf, a_tiled, /*blocking=*/false);
     distributed::EnqueueWriteMeshBuffer(cq, x_buf, x_tiled, /*blocking=*/false);
     distributed::EnqueueWriteMeshBuffer(cq, y_buf, y_tiled, /*blocking=*/false);
-    distributed::EnqueueWriteMeshBuffer(cq, alpha_buf, alpha_tiled, /*blocking=*/false);
-    distributed::EnqueueWriteMeshBuffer(cq, beta_buf, beta_tiled, /*blocking=*/false);
+    distributed::EnqueueWriteMeshBuffer(cq, alpha_buf, alpha_tiled,
+                                        /*blocking=*/false);
+    distributed::EnqueueWriteMeshBuffer(cq, beta_buf, beta_tiled,
+                                        /*blocking=*/false);
 
     distributed::MeshWorkload workload;
     workload.add_program(distributed::MeshCoordinateRange(mesh_device->shape()),
@@ -282,21 +311,23 @@ int main() {
     distributed::EnqueueMeshWorkload(cq, workload, /*blocking=*/false);
 
     std::vector<float> out_tiled;
-    distributed::EnqueueReadMeshBuffer(cq, out_tiled, out_buf, /*blocking=*/true);
+    distributed::EnqueueReadMeshBuffer(cq, out_tiled, out_buf,
+                                       /*blocking=*/true);
     // ANCHOR_END: host_enqueue
 
     // ANCHOR: host_unpad
     // O resultado tem o mesmo formato de y_padded: y[i] está na coluna 0.
-    const std::vector<float> out = convert_layout<float>(
-        out_tiled, {m, m}, TensorLayoutType::TILED_NFACES, TensorLayoutType::LIN_ROW_MAJOR);
+    const std::vector<float> out =
+        convert_layout<float>(out_tiled, {m, m}, TensorLayoutType::TILED_NFACES,
+                              TensorLayoutType::LIN_ROW_MAJOR);
     std::vector<float> y_out(m);
     for (uint32_t i = 0; i < m; i++) {
         y_out[i] = out[i * m];
     }
     // ANCHOR_END: host_unpad
 
-    const sscad::CompareResult result =
-        sscad::compare(y_out, sscad::reference::gemv(m, n, alpha, a, x, beta, y));
+    const sscad::CompareResult result = sscad::compare(
+        y_out, sscad::reference::gemv(m, n, alpha, a, x, beta, y));
     sscad::print_compare(result);
 
     const bool closed = mesh_device->close();

@@ -40,14 +40,16 @@ int main() {
     constexpr uint32_t m = 256;
     constexpr uint32_t n = 320;
     constexpr uint32_t k = 192;
-    static_assert(m % tt::constants::TILE_HEIGHT == 0 && n % tt::constants::TILE_WIDTH == 0 &&
+    static_assert(m % tt::constants::TILE_HEIGHT == 0 &&
+                  n % tt::constants::TILE_WIDTH == 0 &&
                   k % tt::constants::TILE_WIDTH == 0);
     constexpr uint32_t Mt = m / tt::constants::TILE_HEIGHT;
     constexpr uint32_t Nt = n / tt::constants::TILE_WIDTH;
     constexpr uint32_t Kt = k / tt::constants::TILE_WIDTH;
     constexpr uint32_t num_output_tiles = Mt * Nt;
 
-    constexpr uint32_t in_tile_bytes = sizeof(bfloat16) * tt::constants::TILE_HW;
+    constexpr uint32_t in_tile_bytes =
+        sizeof(bfloat16) * tt::constants::TILE_HW;
     constexpr uint32_t out_tile_bytes = sizeof(float) * tt::constants::TILE_HW;
 
     std::vector<bfloat16> a(m * k);
@@ -61,7 +63,8 @@ int main() {
         value = bfloat16(dist(rng));
     }
 
-    std::shared_ptr<distributed::MeshDevice> mesh_device = distributed::MeshDevice::create_unit_mesh(0);
+    std::shared_ptr<distributed::MeshDevice> mesh_device =
+        distributed::MeshDevice::create_unit_mesh(0);
     distributed::MeshCommandQueue &cq = mesh_device->mesh_command_queue();
 
     // ANCHOR: host_split
@@ -76,14 +79,16 @@ int main() {
     tt::tt_metal::CoreRangeSet group_2;
     uint32_t tiles_per_core_1 = 0;
     uint32_t tiles_per_core_2 = 0;
-    std::tie(num_cores, all_cores, group_1, group_2, tiles_per_core_1, tiles_per_core_2) =
-        split_work_to_cores(grid, num_output_tiles);
+    std::tie(num_cores, all_cores, group_1, group_2, tiles_per_core_1,
+             tiles_per_core_2) = split_work_to_cores(grid, num_output_tiles);
     // ANCHOR_END: host_split
 
-    fmt::print("Exemplo 05: C = A B com A {}x{}, B {}x{} bfloat16 e C float em {} de {}x{} núcleos\n",
+    fmt::print("Exemplo 05: C = A B com A {}x{}, B {}x{} bfloat16 e C float em "
+               "{} de {}x{} núcleos\n",
                m, k, k, n, num_cores, grid.x, grid.y);
-    fmt::print("  {} núcleos com {} tiles + {} núcleos com {} tiles\n", group_1.num_cores(),
-               tiles_per_core_1, group_2.num_cores(), tiles_per_core_2);
+    fmt::print("  {} núcleos com {} tiles + {} núcleos com {} tiles\n",
+               group_1.num_cores(), tiles_per_core_1, group_2.num_cores(),
+               tiles_per_core_2);
 
     // ANCHOR: host_buffers
     distributed::DeviceLocalBufferConfig in_dram_config{
@@ -93,14 +98,18 @@ int main() {
 
     distributed::ReplicatedBufferConfig a_size{.size = Mt * Kt * in_tile_bytes};
     distributed::ReplicatedBufferConfig b_size{.size = Kt * Nt * in_tile_bytes};
-    distributed::ReplicatedBufferConfig c_size{.size = Mt * Nt * out_tile_bytes};
+    distributed::ReplicatedBufferConfig c_size{.size =
+                                                   Mt * Nt * out_tile_bytes};
 
     std::shared_ptr<distributed::MeshBuffer> a_buf =
-        distributed::MeshBuffer::create(a_size, in_dram_config, mesh_device.get());
+        distributed::MeshBuffer::create(a_size, in_dram_config,
+                                        mesh_device.get());
     std::shared_ptr<distributed::MeshBuffer> b_buf =
-        distributed::MeshBuffer::create(b_size, in_dram_config, mesh_device.get());
+        distributed::MeshBuffer::create(b_size, in_dram_config,
+                                        mesh_device.get());
     std::shared_ptr<distributed::MeshBuffer> c_buf =
-        distributed::MeshBuffer::create(c_size, out_dram_config, mesh_device.get());
+        distributed::MeshBuffer::create(c_size, out_dram_config,
+                                        mesh_device.get());
     // ANCHOR_END: host_buffers
 
     Program program = CreateProgram();
@@ -112,17 +121,20 @@ int main() {
     constexpr uint32_t tiles_per_cb = 1;
 
     CircularBufferConfig cb_a_config =
-        CircularBufferConfig(tiles_per_cb * in_tile_bytes, {{tt::CBIndex::c_0, tt::DataFormat::Float16_b}})
+        CircularBufferConfig(tiles_per_cb * in_tile_bytes,
+                             {{tt::CBIndex::c_0, tt::DataFormat::Float16_b}})
             .set_page_size(tt::CBIndex::c_0, in_tile_bytes);
     CreateCircularBuffer(program, all_cores, cb_a_config);
 
     CircularBufferConfig cb_b_config =
-        CircularBufferConfig(tiles_per_cb * in_tile_bytes, {{tt::CBIndex::c_1, tt::DataFormat::Float16_b}})
+        CircularBufferConfig(tiles_per_cb * in_tile_bytes,
+                             {{tt::CBIndex::c_1, tt::DataFormat::Float16_b}})
             .set_page_size(tt::CBIndex::c_1, in_tile_bytes);
     CreateCircularBuffer(program, all_cores, cb_b_config);
 
     CircularBufferConfig cb_c_config =
-        CircularBufferConfig(tiles_per_cb * out_tile_bytes, {{tt::CBIndex::c_16, tt::DataFormat::Float32}})
+        CircularBufferConfig(tiles_per_cb * out_tile_bytes,
+                             {{tt::CBIndex::c_16, tt::DataFormat::Float32}})
             .set_page_size(tt::CBIndex::c_16, out_tile_bytes);
     CreateCircularBuffer(program, all_cores, cb_c_config);
     // ANCHOR_END: host_cbs
@@ -147,36 +159,41 @@ int main() {
     // fp32_dest_acc_en: a soma dos Kt produtos de tiles é feita em FP32.
     KernelHandle compute = CreateKernel(
         program, KERNEL_DIR "compute/compute.cpp", all_cores,
-        ComputeConfig{.math_fidelity = tt::tt_metal::MathFidelity::HiFi4, .fp32_dest_acc_en = true});
+        ComputeConfig{.math_fidelity = tt::tt_metal::MathFidelity::HiFi4,
+                      .fp32_dest_acc_en = true});
     // ANCHOR_END: host_kernels
 
     // ANCHOR: host_runtime_args
-    const std::vector<std::pair<tt::tt_metal::CoreRangeSet, uint32_t>> work_groups = {
-        {group_1, tiles_per_core_1}, {group_2, tiles_per_core_2}};
+    const std::vector<std::pair<tt::tt_metal::CoreRangeSet, uint32_t>>
+        work_groups = {{group_1, tiles_per_core_1},
+                       {group_2, tiles_per_core_2}};
 
     uint32_t start_tile = 0;
-    for (const std::pair<tt::tt_metal::CoreRangeSet, uint32_t> &work_group : work_groups) {
+    for (const std::pair<tt::tt_metal::CoreRangeSet, uint32_t> &work_group :
+         work_groups) {
         const uint32_t tiles_per_core = work_group.second;
         for (const tt::tt_metal::CoreRange &range : work_group.first.ranges()) {
             for (const CoreCoord &core : range) {
                 SetRuntimeArgs(program, reader, core,
                                {static_cast<uint32_t>(a_buf->address()),
-                                static_cast<uint32_t>(b_buf->address()), Kt, Nt, start_tile,
-                                tiles_per_core});
+                                static_cast<uint32_t>(b_buf->address()), Kt, Nt,
+                                start_tile, tiles_per_core});
                 SetRuntimeArgs(program, compute, core, {Kt, tiles_per_core});
                 SetRuntimeArgs(program, writer, core,
-                               {static_cast<uint32_t>(c_buf->address()), start_tile,
-                                tiles_per_core});
+                               {static_cast<uint32_t>(c_buf->address()),
+                                start_tile, tiles_per_core});
                 start_tile += tiles_per_core;
             }
         }
     }
     // ANCHOR_END: host_runtime_args
 
-    const std::vector<bfloat16> a_tiled = convert_layout<bfloat16>(
-        a, {m, k}, TensorLayoutType::LIN_ROW_MAJOR, TensorLayoutType::TILED_NFACES);
-    const std::vector<bfloat16> b_tiled = convert_layout<bfloat16>(
-        b, {k, n}, TensorLayoutType::LIN_ROW_MAJOR, TensorLayoutType::TILED_NFACES);
+    const std::vector<bfloat16> a_tiled =
+        convert_layout<bfloat16>(a, {m, k}, TensorLayoutType::LIN_ROW_MAJOR,
+                                 TensorLayoutType::TILED_NFACES);
+    const std::vector<bfloat16> b_tiled =
+        convert_layout<bfloat16>(b, {k, n}, TensorLayoutType::LIN_ROW_MAJOR,
+                                 TensorLayoutType::TILED_NFACES);
 
     // ANCHOR: host_enqueue
     distributed::EnqueueWriteMeshBuffer(cq, a_buf, a_tiled, /*blocking=*/false);
@@ -186,26 +203,24 @@ int main() {
     workload.add_program(distributed::MeshCoordinateRange(mesh_device->shape()),
                          std::move(program));
 
-    // A primeira execução inclui a compilação JIT dos kernels; medimos a segunda.
-    distributed::EnqueueMeshWorkload(cq, workload, /*blocking=*/true);
-    sscad::Timer timer;
-    distributed::EnqueueMeshWorkload(cq, workload, /*blocking=*/true);
-    const double time_ms = timer.elapsed_ms();
+    distributed::EnqueueMeshWorkload(cq, workload, /*blocking=*/false);
 
     std::vector<float> c_tiled;
     distributed::EnqueueReadMeshBuffer(cq, c_tiled, c_buf, /*blocking=*/true);
     // ANCHOR_END: host_enqueue
 
-    const std::vector<float> c = convert_layout<float>(
-        c_tiled, {m, n}, TensorLayoutType::TILED_NFACES, TensorLayoutType::LIN_ROW_MAJOR);
-    const sscad::CompareResult result = sscad::compare(c, sscad::reference::gemm(m, n, k, a, b));
+    const std::vector<float> c =
+        convert_layout<float>(c_tiled, {m, n}, TensorLayoutType::TILED_NFACES,
+                              TensorLayoutType::LIN_ROW_MAJOR);
+    const sscad::CompareResult result =
+        sscad::compare(c, sscad::reference::gemm(m, n, k, a, b));
     sscad::print_compare(result);
 
     // Linha CSV para o benchmark: 2 m n k operações de ponto flutuante.
     const double gflops = 2.0 * m * n * k / (time_ms * 1e6);
     fmt::print("example,m,n,k,dtype,cores,time_ms,gflops,max_rel_err\n");
-    fmt::print("05_gemm_v1_naive,{},{},{},bf16-fp32,{},{:.3f},{:.3f},{:.3e}\n", m, n, k, num_cores,
-               time_ms, gflops, result.max_rel_err);
+    fmt::print("05_gemm_v1_naive,{},{},{},bf16-fp32,{},{:.3f},{:.3f},{:.3e}\n",
+               m, n, k, num_cores, time_ms, gflops, result.max_rel_err);
 
     const bool closed = mesh_device->close();
     return sscad::report(closed && result.pass);

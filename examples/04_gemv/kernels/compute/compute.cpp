@@ -87,7 +87,7 @@ void kernel_main() {
         mul_binary_tile(dst_ax, dst_alpha, dst_ax); // alpha * (A x)
         mul_binary_tile(dst_y, dst_beta, dst_y);    // beta * y
         add_binary_tile_init();
-        add_binary_tile(dst_y, dst_ax, dst_y);      // alpha * (A x) + beta * y
+        add_binary_tile(dst_y, dst_ax, dst_y); // alpha * (A x) + beta * y
         tile_regs_commit();
 
         cb_pop_front(cb_y, 1);

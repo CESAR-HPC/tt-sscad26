@@ -24,14 +24,17 @@ using namespace tt::tt_metal;
 int main() {
     constexpr uint32_t a = 14;
     constexpr uint32_t b = 7;
-    fmt::print("Exemplo 01: {} + {} no RISC-V de movimentação de dados\n", a, b);
+    fmt::print("Exemplo 01: {} + {} no RISC-V de movimentação de dados\n", a,
+               b);
 
     if (std::getenv("TT_METAL_DPRINT_CORES") == nullptr) {
-        fmt::print("Dica: execute `export TT_METAL_DPRINT_CORES=0,0` para ver a "
-                   "mensagem impressa pelo kernel.\n");
+        fmt::print(
+            "Dica: execute `export TT_METAL_DPRINT_CORES=0,0` para ver a "
+            "mensagem impressa pelo kernel.\n");
     }
 
-    std::shared_ptr<distributed::MeshDevice> mesh_device = distributed::MeshDevice::create_unit_mesh(0);
+    std::shared_ptr<distributed::MeshDevice> mesh_device =
+        distributed::MeshDevice::create_unit_mesh(0);
     distributed::MeshCommandQueue &cq = mesh_device->mesh_command_queue();
     constexpr CoreCoord core = {0, 0};
 
@@ -40,10 +43,10 @@ int main() {
     // ainda alinha cada página ao alinhamento da memória (32 B na DRAM e 16 B
     // na L1 do Wormhole), então cada buffer ocupa na prática um bloco alinhado.
     constexpr uint32_t bytes = sizeof(uint32_t);
-    distributed::DeviceLocalBufferConfig dram_config{.page_size = bytes,
-                                                     .buffer_type = BufferType::DRAM};
-    distributed::DeviceLocalBufferConfig l1_config{.page_size = bytes,
-                                                   .buffer_type = BufferType::L1};
+    distributed::DeviceLocalBufferConfig dram_config{
+        .page_size = bytes, .buffer_type = BufferType::DRAM};
+    distributed::DeviceLocalBufferConfig l1_config{
+        .page_size = bytes, .buffer_type = BufferType::L1};
     distributed::ReplicatedBufferConfig size{.size = bytes};
 
     // Operandos e resultado na DRAM...
@@ -105,7 +108,8 @@ int main() {
 
     constexpr uint32_t expected = a + b;
     const bool pass = c_vec.size() == 1 && c_vec[0] == expected;
-    fmt::print("Resultado: {} (esperado {})\n", c_vec.empty() ? 0 : c_vec[0], expected);
+    fmt::print("Resultado: {} (esperado {})\n", c_vec.empty() ? 0 : c_vec[0],
+               expected);
 
     const bool closed = mesh_device->close();
     return sscad::report(closed && pass);
