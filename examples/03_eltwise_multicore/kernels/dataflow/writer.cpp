@@ -5,7 +5,10 @@
 
 #include <cstdint>
 
+#include "api/dataflow/circular_buffer.h"
 #include "api/dataflow/dataflow_api.h"
+#include "api/dataflow/noc.h"
+#include "api/tensor/noc_traits.h"
 
 void kernel_main() {
     const uint32_t c_addr = get_arg_val<uint32_t>(0);
@@ -17,14 +20,18 @@ void kernel_main() {
     constexpr TensorAccessorArgs<0> c_args;
     const TensorAccessor c(c_args, c_addr);
 
+    Noc noc;
+    CircularBuffer c_cb(cb_c);
+    const uint32_t tile_bytes = c_cb.get_tile_size();
+
     // ANCHOR: writer_loop
     const uint32_t end_tile = start_tile + num_tiles;
     for (uint32_t i = start_tile; i < end_tile; i++) {
-        cb_wait_front(cb_c, 1);
-        noc_async_write_page(i, c, get_read_ptr(cb_c));
-        noc_async_writes_flushed();
-        cb_pop_front(cb_c, 1);
+        c_cb.wait_front(1);
+        noc.async_write(c_cb, c, tile_bytes, {.offset_bytes = 0}, {.page_id = i});
+        noc.async_writes_flushed();
+        c_cb.pop_front(1);
     }
-    noc_async_write_barrier();
+    noc.async_write_barrier();
     // ANCHOR_END: writer_loop
 }
