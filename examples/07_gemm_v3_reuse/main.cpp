@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Exemplo 07 — GEMM v3 (reuso em L1): C = A B.
 //
 // Os tipos são os dos exemplos 05 e 06 (A e B bfloat16, C float, acumulação

@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Reader do exemplo 09 (camada linear + GELU). Igual ao reader do exemplo 07
 // (com X no lugar de A e W no lugar de B), mais os tiles do bias: antes do
 // laço em K, lê uma vez os per_core_N tiles de bias das colunas

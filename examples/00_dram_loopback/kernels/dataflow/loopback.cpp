@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Kernel de movimentação de dados do exemplo 00: copia num_tiles tiles de um
 // buffer da DRAM para outro, passando por um buffer de um tile na L1.
 //

@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Reader do exemplo 08 (GEMM v4). Um kernel só para todos os núcleos: o
 // papel do núcleo sai da posição do seu bloco (by, bx) na grade.
 //   - bx == 0: emissor de A. Lê o bloco de A da DRAM (como no exemplo 07) e o

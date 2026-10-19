@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Kernel do exemplo 01: soma dois uint32 usando o próprio RISC-V de
 // movimentação de dados como CPU.
 //

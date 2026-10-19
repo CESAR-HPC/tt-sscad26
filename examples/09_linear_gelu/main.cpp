@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Exemplo 09 — Camada linear + GELU: Y = GELU(X W + b).
 //
 // O GEMM é o do exemplo 07 (blocos de X e W reaproveitados em L1, somas

@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Compute do exemplo 09 (camada linear + GELU), em duas fases.
 //
 // Fase 1 (FPU, matmul): o GEMM do exemplo 07. A cada passo kb em K, cada

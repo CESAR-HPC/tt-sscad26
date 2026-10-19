@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Compute do exemplo 07 (GEMM v3). A cada passo kb em K recebe um bloco de A
 // (per_core_M x in0_block_w) e um de B (in0_block_w x per_core_N) e percorre
 // o bloco de C em sub-blocos de out_subblock_h x out_subblock_w tiles, que

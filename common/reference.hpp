@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Implementações de referência em CPU. Todas acumulam em float, de modo que o
 // resultado do dispositivo possa ser comparado com uma versão "exata".
 #pragma once

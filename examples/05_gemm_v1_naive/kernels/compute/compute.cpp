@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Compute do exemplo 05 (GEMM v1). Para cada tile de saída: zera o Dst,
 // acumula os Kt produtos A(i, kt) · B(kt, j) com matmul_tiles e empacota o
 // resultado. O compute não sabe quais tiles está processando — só quantos.

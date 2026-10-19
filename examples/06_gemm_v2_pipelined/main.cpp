@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Exemplo 06 — GEMM v2 (pipeline): C = A B.
 //
 // Mesmo algoritmo e mesma divisão de trabalho do exemplo 05 (um tile de C por

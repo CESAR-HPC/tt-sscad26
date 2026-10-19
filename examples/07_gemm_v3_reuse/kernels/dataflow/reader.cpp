@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Reader do exemplo 07 (GEMM v3). O núcleo calcula o bloco (by, bx) de C, de
 // per_core_M x per_core_N tiles. Para cada passo kb em K, lê para a L1:
 //   - o bloco de A com as linhas de tiles by * per_core_M + h e as colunas

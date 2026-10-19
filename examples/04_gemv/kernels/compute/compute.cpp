@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Compute do exemplo 04 (GEMV). Para cada linha de tiles, em duas fases:
 //   1. FPU: Dst = soma_nt A(mt, nt) · x(nt, mt) (matmul_tiles acumula no Dst);
 //      o tile resultante vai para o CB intermediário c_5.

@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Reader do exemplo 06 (GEMM v2). Mesma ordem de leitura do exemplo 05, mas,
 // para cada tile de saída (i, j), reserva de uma vez os Kt tiles A(i, kt) e os
 // Kt tiles B(kt, j), emite as 2 Kt leituras e espera uma única barreira. As

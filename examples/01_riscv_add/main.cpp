@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Exemplo 01 — soma de dois inteiros no RISC-V de movimentação de dados.
 //
 // Os processadores que executam os kernels de movimentação de dados são CPUs

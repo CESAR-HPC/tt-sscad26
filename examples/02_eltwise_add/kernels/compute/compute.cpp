@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Compute do exemplo 02: C = A + B, um tile por vez.
 //
 // O kernel de computação é compilado três vezes, uma para cada RISC-V que

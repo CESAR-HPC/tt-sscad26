@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Writer do exemplo 03: igual ao do exemplo 02, mas escreve apenas a faixa
 // [start_tile, start_tile + num_tiles) atribuída a este núcleo.
 

@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Writer do exemplo 08 (GEMM v4), idêntico ao do exemplo 07. O compute
 // entrega o bloco (by, bx) de C sub-bloco por sub-bloco (out_subblock_h x
 // out_subblock_w tiles, row-major dentro do sub-bloco, sub-blocos em row-major

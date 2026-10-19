@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Compute do exemplo 03: idêntico ao do exemplo 02. O compute só enxerga os
 // CBs, então não precisa saber quais tiles globais está processando — basta
 // saber quantos.

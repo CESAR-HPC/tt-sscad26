@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Writer do exemplo 04 (GEMV). Escreve um tile de y por linha de tiles,
 // na mesma posição que ele ocupa na matriz de y: o tile (mt, 0).
 

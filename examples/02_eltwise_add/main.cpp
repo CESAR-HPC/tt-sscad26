@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Exemplo 02 — soma elemento a elemento C = A + B em um núcleo.
 //
 // Menor programa que mostra o modelo de programação completo:

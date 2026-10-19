@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Exemplo 05 — GEMM v1 (ingênuo): C = A B.
 //
 // A e B são bfloat16, C é float e a acumulação é feita em FP32 no Dst. Os

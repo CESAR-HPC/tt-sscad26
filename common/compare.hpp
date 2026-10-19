@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Comparação entre o resultado do dispositivo e a referência em CPU.
 #pragma once
 

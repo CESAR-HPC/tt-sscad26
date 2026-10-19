@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Medição de tempo de parede no host.
 #pragma once
 

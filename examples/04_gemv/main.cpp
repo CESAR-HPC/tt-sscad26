@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Exemplo 04 — GEMV multicore: y = alpha * A x + beta * y.
 //
 // A e x são bfloat16; y, alpha e beta são float (FP32), e o produto A x é

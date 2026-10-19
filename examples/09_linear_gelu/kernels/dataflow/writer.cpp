@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Writer do exemplo 09 (camada linear + GELU), idêntico ao do exemplo 07:
 // escreve o bloco (by, bx) de Y, sub-bloco por sub-bloco, na posição de cada
 // tile em Y.

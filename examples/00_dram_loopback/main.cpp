@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Exemplo 00 — DRAM loopback.
 //
 // Primeiro contato com o TT-Metalium: o host coloca dados na DRAM do

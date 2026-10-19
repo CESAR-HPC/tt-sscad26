@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Compute do exemplo 08 (GEMM v4): idêntico ao do exemplo 07. O compute só vê
 // os CBs; não sabe se os blocos vieram da DRAM ou de um multicast.
 //

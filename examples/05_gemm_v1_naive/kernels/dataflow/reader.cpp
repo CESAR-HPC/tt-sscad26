@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Reader do exemplo 05 (GEMM v1). Para cada tile de saída (i, j) da faixa do
 // núcleo, lê os Kt tiles A(i, kt) e B(kt, j), na ordem em que o compute os
 // consome. Cada leitura tem a sua barreira: o reader fica parado esperando a

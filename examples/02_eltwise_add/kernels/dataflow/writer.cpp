@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Writer do exemplo 02: leva os tiles de C do CB c_16 para a DRAM.
 
 #include <cstdint>

@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Exemplo 03 — soma elemento a elemento C = A + B em vários núcleos.
 //
 // Mesmo programa do exemplo 02, mas os tiles são divididos entre os núcleos

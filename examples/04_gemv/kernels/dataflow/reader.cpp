@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Reader do exemplo 04 (GEMV). Lê uma vez os tiles de alpha e beta e, para
 // cada linha de tiles mt atribuída ao núcleo, o tile de y e os Nt pares de
 // tiles (A, x) que o compute vai multiplicar.

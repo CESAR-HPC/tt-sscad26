@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Reader do exemplo 02: traz os tiles de A e B da DRAM para os CBs c_0 e c_1.
 
 #include <cstdint>

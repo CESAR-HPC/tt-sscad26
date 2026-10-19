@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Exemplo 08 — GEMM v4 (multicast): C = A B.
 //
 // O compute, o writer e a divisão em blocos são os do exemplo 07. A diferença

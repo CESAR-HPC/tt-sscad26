@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Compute do exemplo 06 (GEMM v2), idêntico ao do exemplo 05. Para cada tile
 // de saída: zera o Dst, acumula os Kt produtos A(i, kt) · B(kt, j) com
 // matmul_tiles e empacota o resultado. O reader agora entrega Kt tiles de uma

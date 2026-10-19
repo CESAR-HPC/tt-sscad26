@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-//
 // Writer do exemplo 06 (GEMM v2). Em vez de esperar cada escrita terminar
 // (noc_async_write_barrier por tile, como no exemplo 05), espera só que a
 // escrita tenha saído da L1 (async_writes_flushed): a partir daí o slot do
