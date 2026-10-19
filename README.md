@@ -43,10 +43,10 @@ recebem argumentos: tamanhos e valores são constantes no próprio `main.cpp`.
 | [03_eltwise_multicore](examples/03_eltwise_multicore) | O exemplo 02 dividido entre os núcleos | implementado |
 | [04_gemv](examples/04_gemv) | `y = αAx + βy` | implementado |
 | [05_gemm_v1_naive](examples/05_gemm_v1_naive) | GEMM ingênuo | implementado |
-| [06_gemm_v2_pipelined](examples/06_gemm_v2_pipelined) | GEMM com leituras sobrepostas | stub |
-| [07_gemm_v3_reuse](examples/07_gemm_v3_reuse) | GEMM com reuso em L1 | stub |
-| [08_gemm_v4_mcast](examples/08_gemm_v4_mcast) | GEMM com multicast | stub |
-| [09_linear_gelu](examples/09_linear_gelu) | `Y = GELU(XW + b)` | stub |
+| [06_gemm_v2_pipelined](examples/06_gemm_v2_pipelined) | GEMM com leituras sobrepostas | implementado |
+| [07_gemm_v3_reuse](examples/07_gemm_v3_reuse) | GEMM com reuso em L1 | implementado |
+| [08_gemm_v4_mcast](examples/08_gemm_v4_mcast) | GEMM com multicast | implementado |
+| [09_linear_gelu](examples/09_linear_gelu) | `Y = GELU(XW + b)` | implementado |
 
 Cada exemplo tem `main.cpp` (host), `kernels/` e um README com o objetivo, o
 mapeamento em núcleos e CBs e a saída esperada. Todas as chamadas ao
