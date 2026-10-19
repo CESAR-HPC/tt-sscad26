@@ -32,7 +32,7 @@ void kernel_main() {
     constexpr uint32_t cb_ax = tt::CBIndex::c_5;
     constexpr uint32_t cb_out = tt::CBIndex::c_16;
 
-    // Registradores do Dst usados na fase 2 (mesma ordem do tt-blas). Com
+    // Registradores do Dst usados na fase 2. Com
     // fp32_dest_acc_en cabem 4 tiles FP32 no Dst.
     constexpr uint32_t dst_y = 0;
     constexpr uint32_t dst_beta = 1;

@@ -4,8 +4,6 @@ O exemplo 02 dividido entre vários núcleos Tensix. Os kernels são
 praticamente os mesmos; mudam apenas a divisão do trabalho no host e o
 índice do primeiro tile passado ao reader e ao writer.
 
-Referência: `tt-metal/tt_metal/programming_examples/vecadd_multi_core`.
-
 ## Divisão do trabalho
 
 `split_work_to_cores(núcleos, num_tiles)` devolve dois grupos de núcleos:

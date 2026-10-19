@@ -1,16 +1,13 @@
 # 04 — GEMV multicore
 
 `y = αAx + βy`, com `A` e `x` em bfloat16 e `y`, `α` e `β` em float (FP32).
-O produto `Ax` é acumulado em FP32 no registrador Dst. É a forma `sbgemv` do
-tt-blas.
-
-Referência: `petro-tt/tt-blas/blas/gemv`.
+O produto `Ax` é acumulado em FP32 no registrador Dst.
 
 ## Vetores como matrizes de tiles (padding)
 
 O motor de matrizes (FPU) só multiplica tiles 32x32, então `x` e `y` precisam
-virar matrizes. O exemplo usa o mesmo preenchimento do tt-blas
-(`utils/padding.hpp`), escrito no próprio `main.cpp` (âncora `host_padding`):
+virar matrizes. O preenchimento é feito no próprio `main.cpp` (âncora
+`host_padding`):
 
 | Vetor | Matriz | Conteúdo |
 |---|---|---|
@@ -53,17 +50,6 @@ na fase 2). O unpacker não se reconfigura sozinho, então cada fase começa com
 | CBs | `c_0` (A) e `c_1` (x): bfloat16, 2 tiles; `c_2` (y) e `c_16` (saída): float, 2 tiles; `c_3` (α), `c_4` (β) e `c_5` (Ax): float, 1 tile |
 | Compute | `HiFi4`, `fp32_dest_acc_en = true` |
 | Validação | `reference::gemv` em CPU, tolerância de bfloat16 |
-
-## Diferenças em relação ao tt-blas
-
-- O tt-blas divide `Mt·Nt` unidades de trabalho entre os núcleos, mas cada
-  unidade é tratada como uma linha de tiles; com `Nt > 1` os núcleos extras
-  leem e escrevem fora dos buffers. Aqui a divisão é sobre as `Mt` linhas.
-- Os buffers têm o tamanho de cada matriz (`A`: `Mt·Nt`, `x`: `Nt·Mt`, `y`:
-  `Mt·Mt` tiles), em vez de `Mt·Nt` tiles para todos.
-- O compute reconfigura o unpacker entre as fases, o que permite processar
-  mais de uma linha de tiles por núcleo.
-- CBs de 2 tiles (double buffering) em vez de CBs do tamanho da faixa.
 
 ## Como executar
 

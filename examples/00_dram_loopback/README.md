@@ -8,8 +8,6 @@ outro buffer da DRAM e o host lê o resultado de volta.
 host --PCIe--> DRAM (entrada) --NoC--> L1 --NoC--> DRAM (saída) --PCIe--> host
 ```
 
-Referência: `tt-metal/tt_metal/programming_examples/loopback`.
-
 ## O que o exemplo mostra
 
 - **Buffers na DRAM e na L1** (`MeshBuffer`). Um núcleo Tensix não acessa a

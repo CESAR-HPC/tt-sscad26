@@ -3,13 +3,12 @@
 // Exemplo 04 — GEMV multicore: y = alpha * A x + beta * y.
 //
 // A e x são bfloat16; y, alpha e beta são float (FP32), e o produto A x é
-// acumulado em FP32 no registrador Dst (a forma "sbgemv" do tt-blas).
+// acumulado em FP32 no registrador Dst.
 //
 // O motor de matrizes só multiplica tiles 32x32, então os vetores precisam
-// virar matrizes de tiles. Seguimos o preenchimento (padding) do tt-blas:
-// cada vetor ocupa a coluna 0 dos seus tiles e o resto é zero. Assim, o
-// produto de um tile de A por um tile de x deixa na coluna 0 do tile de saída
-// a contribuição daquele bloco para y.
+// virar matrizes de tiles (padding): cada vetor ocupa a coluna 0 dos seus
+// tiles e o resto é zero. Assim, o produto de um tile de A por um tile de x
+// deixa na coluna 0 do tile de saída a contribuição daquele bloco para y.
 //
 // Cada núcleo recebe uma faixa de linhas de tiles de A (uma linha de tiles
 // produz 32 elementos de y).
@@ -38,9 +37,9 @@
 using namespace tt::tt_metal;
 
 // ANCHOR: host_padding
-// Preenchimento do tt-blas (utils/padding.hpp). Nenhuma das duas funções usa o
-// TT-Metalium: elas só montam, em row-major, as matrizes que serão convertidas
-// para o layout de tiles.
+// Preenchimento dos vetores. Nenhuma das duas funções usa o TT-Metalium:
+// elas só montam, em row-major, as matrizes que serão convertidas para o
+// layout de tiles.
 
 // Vetor x de tamanho rows -> matriz rows x cols com x[i] na coluna 0 de cada
 // coluna de tiles: padded[i][32 * j] = x[i]. O resto é zero.

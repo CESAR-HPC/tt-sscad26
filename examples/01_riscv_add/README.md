@@ -5,10 +5,6 @@ RISC-V comuns. Este exemplo mostra que eles executam C++ normal: o kernel lê
 dois `uint32` da DRAM, soma-os e escreve o resultado de volta. O objetivo
 principal, porém, é deixar claras as **limitações** desses núcleos.
 
-Referência: `tt-metal/tt_metal/programming_examples/add_2_integers_in_riscv`
-(cujo kernel usa o `InterleavedAddrGen`, obsoleto; aqui o acesso à DRAM é
-feito com `TensorAccessor`).
-
 ## Mapeamento
 
 | Item | Valor |
