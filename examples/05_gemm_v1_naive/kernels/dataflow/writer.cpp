@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Writer do exemplo 05 (GEMM v1). Escreve cada tile de C na DRAM, com uma
-// barreira por tile, como no tt-blas.
+// barreira por tile.
 
 #include <cstdint>
 

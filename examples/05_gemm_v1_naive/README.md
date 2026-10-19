@@ -1,12 +1,9 @@
 # 05 — GEMM v1 (ingênuo)
 
 `C = AB`, com `A` (`m x k`) e `B` (`k x n`) em bfloat16 e `C` em float, com
-acumulação em FP32 no Dst. Porte do GEMM do tt-blas com `TensorAccessor`: um
-tile de saída por iteração, uma barreira por tile lido e nenhum reuso de
-dados. É a versão de referência que os exemplos 06–08 otimizam.
-
-Referência: `petro-tt/tt-blas/blas/gemm` (sem `α` e `β`) e
-`tt-metal/tt_metal/programming_examples/matmul/matmul_multi_core`.
+acumulação em FP32 no Dst. É a versão mais simples: um tile de saída por
+iteração, uma barreira por tile lido e nenhum reuso de dados. Os exemplos
+06–08 otimizam esta versão.
 
 ## Decomposição em tiles
 
@@ -33,8 +30,8 @@ entre os núcleos com `split_work_to_cores`, como no exemplo 03.
 
 | Item | Valor |
 |---|---|
-| Operação | `C = AB`, `m = 256`, `n = 320`, `k = 192` (`Mt = 8`, `Nt = 10`, `Kt = 6`) |
-| Núcleos | a grade inteira (72 no simulador): 80 tiles → 8 núcleos com 2 e 64 com 1 |
+| Operação | `C = AB`, `m = 576`, `n = 512`, `k = 384` (`Mt = 18`, `Nt = 16`, `Kt = 12`) |
+| Núcleos | a grade inteira (72 no simulador): 288 tiles → 4 por núcleo |
 | CBs | `c_0` (A) e `c_1` (B): bfloat16, 1 tile; `c_16` (C): float, 1 tile |
 | Compute | `HiFi4`, `fp32_dest_acc_en = true` |
 | Validação | `reference::gemm` em CPU, tolerância de bfloat16 |
@@ -59,11 +56,11 @@ example,m,n,k,dtype,cores,time_ms,gflops,max_rel_err
 Saída esperada (o tempo varia):
 
 ```
-Exemplo 05: C = A B com A 256x192, B 192x320 bfloat16 e C float em 72 de 8x9 núcleos
-  8 núcleos com 2 tiles + 64 núcleos com 1 tiles
-Erro absoluto máximo: 3.836e-03 | erro relativo máximo: 1.818e-04 | PCC: 1.000000
+Exemplo 05: C = A B com A 576x384, B 384x512 bfloat16 e C float em 72 de 8x9 núcleos
+  72 núcleos com 4 tiles + 0 núcleos com 0 tiles
+Erro absoluto máximo: 5.563e-03 | erro relativo máximo: 1.879e-04 | PCC: 1.000000
 example,m,n,k,dtype,cores,time_ms,gflops,max_rel_err
-05_gemm_v1_naive,256,320,192,bf16-fp32,72,430.331,0.073,1.818e-04
+05_gemm_v1_naive,576,512,384,bf16-fp32,72,1172.739,0.193,1.879e-04
 PASSOU
 ```
 

@@ -2,12 +2,11 @@
 //
 // Exemplo 05 — GEMM v1 (ingênuo): C = A B.
 //
-// Porte do GEMM do tt-blas com TensorAccessor. A e B são bfloat16, C é float
-// e a acumulação é feita em FP32 no Dst. Os tiles de C são divididos entre os
-// núcleos; para cada tile de saída (i, j) o núcleo lê os Kt tiles da linha i
-// de A e da coluna j de B, um de cada vez, com uma barreira por leitura, e
-// nada é reaproveitado entre tiles de saída. É a versão mais simples possível,
-// e o ponto de partida dos exemplos 06–08.
+// A e B são bfloat16, C é float e a acumulação é feita em FP32 no Dst. Os
+// tiles de C são divididos entre os núcleos; para cada tile de saída (i, j) o
+// núcleo lê os Kt tiles da linha i de A e da coluna j de B, um de cada vez,
+// com uma barreira por leitura, e nada é reaproveitado entre tiles de saída.
+// É a versão mais simples possível, e o ponto de partida dos exemplos 06–08.
 
 #include <cstdint>
 #include <memory>
@@ -35,11 +34,13 @@ using namespace tt::tt_metal;
 
 int main() {
     // A é m x k, B é k x n, C é m x n. Os três tamanhos são diferentes para
-    // que os índices não se confundam; os 8x10 = 80 tiles de C não se dividem
-    // igualmente pelos 72 núcleos (dois grupos em split_work_to_cores).
-    constexpr uint32_t m = 256;
-    constexpr uint32_t n = 320;
-    constexpr uint32_t k = 192;
+    // que os índices não se confundam. São os mesmos tamanhos dos exemplos
+    // 06–09: com os blocos de 2x2 tiles dos exemplos 07–09, os 18x16 tiles de
+    // C formam uma grade de 8x9 blocos, que ocupa os 72 núcleos. Aqui os 288
+    // tiles se dividem igualmente (4 por núcleo, o grupo 2 fica vazio).
+    constexpr uint32_t m = 576;
+    constexpr uint32_t n = 512;
+    constexpr uint32_t k = 384;
     static_assert(m % tt::constants::TILE_HEIGHT == 0 &&
                   n % tt::constants::TILE_WIDTH == 0 &&
                   k % tt::constants::TILE_WIDTH == 0);
@@ -203,7 +204,11 @@ int main() {
     workload.add_program(distributed::MeshCoordinateRange(mesh_device->shape()),
                          std::move(program));
 
-    distributed::EnqueueMeshWorkload(cq, workload, /*blocking=*/false);
+    // A primeira execução inclui a compilação JIT dos kernels; medimos a segunda.
+    distributed::EnqueueMeshWorkload(cq, workload, /*blocking=*/true);
+    sscad::Timer timer;
+    distributed::EnqueueMeshWorkload(cq, workload, /*blocking=*/true);
+    const double time_ms = timer.elapsed_ms();
 
     std::vector<float> c_tiled;
     distributed::EnqueueReadMeshBuffer(cq, c_tiled, c_buf, /*blocking=*/true);
